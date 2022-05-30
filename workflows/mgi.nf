@@ -128,7 +128,7 @@ EOF
 
 process RunMultiQC {
     executor 'local'
-    module 'mugqic/python/3.9.1'
+    module 'mugqic_dev/MultiQC_C3G/1.12_beta'
 
     input:
     tuple val(rundir), path("config.yaml")
@@ -148,7 +148,8 @@ process RunMultiQC {
         --filename multiqc_report.html \\
         --sample-filters <(sample_filters.rb $rundir) \\
         --sample-names <(sample_names.rb $rundir) \\
-        --replace-names <(replace_names.rb $rundir)
+        --replace-names <(replace_names.rb $rundir) \\
+        --runprocessing
     """
 }
 
