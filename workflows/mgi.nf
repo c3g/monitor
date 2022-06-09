@@ -89,7 +89,7 @@ process EmailAlertStart {
 
 process BeginRunT7 {
     executor 'local'
-    module 'mugqic/python/3.8.5'
+    module 'mugqic/python/3.10.4'
 
     input:
     val eventfile
