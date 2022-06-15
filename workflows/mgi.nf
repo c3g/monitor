@@ -87,12 +87,32 @@ process EmailAlertStart {
     tmpdir.delete()
 }
 
+process GetGenpipes {
+    input:
+    val(commit)
+
+    output:
+    tuple val(commit), path("genpipes")
+
+    script:
+    if(params.genpipes)
+        """
+        ln -s ${params.genpipes} genpipes
+        """
+    else
+        """
+        git clone git@bitbucket.org:mugqic/genpipes.git
+        cd genpipes
+        git checkout $commit
+        """
+}
+
 process BeginRunT7 {
     executor 'local'
     module 'mugqic/python/3.10.4'
 
     input:
-    val eventfile
+    tuple val eventfile, path("genpipes")
 
     output:
     val eventfile
@@ -137,19 +157,7 @@ process RunMultiQC {
     tuple path("multiqc_report.html"), path("*/multiqc_data.json")
 
     """
-    multiqc $rundir \\
-        --ignore *.qual \\
-        --ignore BasecallQC.txt \\
-        --ignore *.zip \\
-        --ignore *.html \\
-        --ignore *.pdf \\
-        --force \\
-        --config config.yaml \\
-        --filename multiqc_report.html \\
-        --sample-filters <(sample_filters.rb $rundir) \\
-        --sample-names <(sample_names.rb $rundir) \\
-        --replace-names <(replace_names.rb $rundir) \\
-        --runprocessing
+    multiqc --runprocessing $rundir
     """
 }
 
@@ -252,8 +260,11 @@ workflow T7 {
     .map { Eventfile evt -> db.hasFlagfile(evt) ? evt : log.debug("New eventfile (${evt.flowcell}) | No matching flagfile") }
     .set { EventfilesForRunning }
 
+    Channel.from(params.commit) | GetGenpipes
+
     EventfilesForRunning
     | mix(EventfilesForRunningFromFlagfiles)
+    | combine(GetGenpipes.out)
     | BeginRunT7
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
