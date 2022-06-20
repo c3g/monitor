@@ -92,7 +92,7 @@ process GetGenpipes {
     val(commit)
 
     output:
-    tuple val(commit), path("genpipes")
+    path("genpipes")
 
     script:
     if(params.genpipes)
@@ -112,7 +112,7 @@ process BeginRunT7 {
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val eventfile, path("genpipes")
+    tuple val(eventfile), path("genpipes")
 
     output:
     val eventfile
@@ -157,7 +157,12 @@ process RunMultiQC {
     tuple path("multiqc_report.html"), path("*/multiqc_data.json")
 
     """
-    multiqc --runprocessing $rundir
+    multiqc $rundir \\
+        --template c3g \\
+        --runprocessing \\
+        --sample-filters <(sample_filters.rb $rundir) \\
+        --sample-names <(sample_names.rb $rundir) \\
+        --replace-names <(replace_names.rb $rundir) \\
     """
 }
 
@@ -184,15 +189,10 @@ workflow RunSpecific {
 }
 
 workflow WatchForCheckpoints {
-    log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.done"
-    // checkpoints = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.done")
+    log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone"
+    checkpoints = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.done")
 
-    // a = Channel.watchPath("${params.mgi.outdir}/220321_R2130400190016_10103_BV300096734_10103MG01B-dnbseqg400/job_output/checkpoint/*.done")
-    // b = Channel.watchPath("${params.mgi.outdir}/220321_R2130400190016_10102_AV350007796_10102MG01A-dnbseqg400/job_output/checkpoint/*.done")
-    a = Channel.watchPath("${params.mgi.outdir}/220323_R2130400190018_10104_AV300096788_10104MG02A-dnbseqg400/job_output/checkpoint/*.done")
-    b = Channel.watchPath("${params.mgi.outdir}/220323_R2130400190018_10105_BV300096795_10105MG02B-dnbseqg400/job_output/checkpoint/*.done")
-
-    a.mix(b)
+    checkpoints
     | map { [it.getParent().getParent().getParent(), file(params.mgi.multiqc_config)] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)]} \
@@ -200,12 +200,9 @@ workflow WatchForCheckpoints {
 }
 
 workflow WatchForFinish {
-    // Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
+    doneFiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
 
-    a = Channel.watchPath("${params.mgi.outdir}/220321_R2130400190016_10103_BV300096734_10103MG01B-dnbseqg400/job_output/final_notification/final_notification.*.done")
-    b = Channel.watchPath("${params.mgi.outdir}/220321_R2130400190016_10102_AV350007796_10102MG01A-dnbseqg400/job_output/final_notification/final_notification.*.done")
-
-    a.mix(b)
+    doneFiles
     | map { [it.getParent().getParent().getParent(), file(params.mgi.multiqc_config)] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)]} \
