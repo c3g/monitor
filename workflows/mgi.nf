@@ -200,6 +200,7 @@ workflow WatchForCheckpoints {
 }
 
 workflow WatchForFinish {
+    log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
     doneFiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
 
     doneFiles
