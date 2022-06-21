@@ -95,7 +95,7 @@ process GetGenpipes {
     path("genpipes")
 
     script:
-    if(params.genpipes)
+    if (params.genpipes)
         """
         ln -s ${params.genpipes} genpipes
         """
@@ -119,10 +119,12 @@ process BeginRunT7 {
 
     script:
     def custom_ini = params.mgi.t7.custom_ini ? Paths.get(projectDir.toString(), params.mgi.t7.custom_ini) : ""
+    def genpipes = "\$(realpath genpipes)"
+    def splitbarcodeDemux = (params.mgi.t7.demux) ? "--splitbarcode-demux" : ""
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
-export MUGQIC_PIPELINES_HOME=/home/rsyme/src/bitbucket.org/mugqic/genpipes
+export MUGQIC_PIPELINES_HOME=${genpipes}
 
 mkdir -p ${params.mgi.outdir}/${eventfile.flowcell}
 
@@ -140,7 +142,7 @@ EOF
     --flag /nb/Research/MGISeq/T7/R1100600200054/flag \\
     --run-id ${eventfile.flowcell} \\
     --no-json \\
-    --splitbarcode-demux \\
+    $splitbarcodeDemux \\
     --type mgit7 \\
     -r ${eventfile.filename}
     """
