@@ -150,7 +150,7 @@ EOF
 
 process RunMultiQC {
     executor 'local'
-    module 'mugqic_dev/MultiQC_C3G/1.12_beta'
+    module 'mugqic_dev/MultiQC/runprocessing-1.0.1'
 
     input:
     tuple val(rundir), path("config.yaml")
@@ -158,13 +158,14 @@ process RunMultiQC {
     output:
     tuple path("multiqc_report.html"), path("*/multiqc_data.json")
 
+    script:
+    def config = "\$(realpath config.yaml)"
     """
     multiqc $rundir \\
         --template c3g \\
         --runprocessing \\
-        --sample-filters <(sample_filters.rb $rundir) \\
-        --sample-names <(sample_names.rb $rundir) \\
-        --replace-names <(replace_names.rb $rundir) \\
+        --interactive \\
+        --config ${config}
     """
 }
 
