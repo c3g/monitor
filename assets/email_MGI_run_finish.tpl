@@ -2,7 +2,7 @@ def nfGeneral = java.text.NumberFormat.getInstance()
 def nfPercent = java.text.NumberFormat.getPercentInstance()
 nfPercent.setMinimumFractionDigits(1)
 Date date = new Date()
-def yield = run.generalStats.inject(0) { count, item -> item.value.yield as Integer }
+def yield = run.generalStats.inject(0) { count, item -> item.value.yield as BigInteger }
 
 yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
@@ -11,14 +11,18 @@ html(lang:'en') {
         title("MGI Run finished: ${run.flowcell}")
     }
     body {
-        div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto;") {
+        div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
             h3 "Flowcell: ${run.flowcell}"
             p {
-                span "Run processing finished. Full attached to this email, but also available "
+                span "Run processing finished. Full report attached to this email, but also available "
                 a href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2022/${run.flowcell}.report.html", "on GenAP"
                 span "."
             }
-            p "Sample yield: ${nfGeneral.format(yield)} bp"
+            ul {
+                li "Spread: ${run.headerInfo.Spreads}"
+                li "Yield assigned to samples: ${nfGeneral.format(yield)} bp"
+                li "Instrument: ${run.headerInfo.Instrument}"
+            }
             table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
                 thead {
                     tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {

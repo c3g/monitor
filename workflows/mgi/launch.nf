@@ -1,48 +1,10 @@
-@Grab('org.codehaus.groovy:groovy-all:2.2.2')
-@Grab(group='org.xerial', module='sqlite-jdbc', version='3.36.0.3')
 @Grab('com.xlson.groovycsv:groovycsv:1.3')
-
-import static com.xlson.groovycsv.CsvParser.parseCsv
 
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.Files
 
-import groovy.sql.Sql
-import groovy.text.markup.*
-import groovy.text.*
-
-params.skiprescan=false
-params.nomail=false
-
-process EmailAlertFinish {
-    executor 'local'
-
-    input:
-    tuple val(multiqc_html), val(multiqc_json)
-
-    when:
-    !params.nomail
-
-    exec:
-    def email_fields = [run: multiqc_json, workflow: workflow]
-
-    TemplateConfiguration config = new TemplateConfiguration()
-    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
-    def templateFile = new File("$projectDir/assets/email_MGI_run_finish.tpl")
-    Writable output = engine.createTemplate(templateFile).make(email_fields)
-
-    log.debug("New run ${multiqc_json.flowcell} | Sending email to '${params.email.onfinish}'")
-
-    sendMail {
-        to params.email.onfinish
-        from 'abacus.genome@mail.mcgill.ca'
-        attach "$multiqc_html"
-        subject "MGI run processing finished: flowcell ${multiqc_json.flowcell}"
-
-        output.toString()
-    }
-}
+import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
@@ -78,7 +40,7 @@ process EmailAlertStart {
         to params.email.onstart
         from 'abacus.genome@mail.mcgill.ca'
         attach "$tmpfile"
-        subject "New T7 run - Processing started flowcell ${eventfile.flowcell}"
+        subject "Run processing starting - ${eventfile.flowcell}"
 
         html_template.toString()
     }
@@ -101,7 +63,7 @@ process GetGenpipes {
         """
     else
         """
-        git clone git@bitbucket.org:mugqic/genpipes.git
+        git clone git@bitbucket.org:mugqic/genpipes.git genpipes
         cd genpipes
         git checkout $commit
         """
@@ -148,85 +110,31 @@ EOF
     """
 }
 
-process RunMultiQC {
-    executor 'local'
-    module 'mugqic_dev/MultiQC/runprocessing-1.0.1'
-
-    input:
-    tuple val(rundir), path("config.yaml")
-
-    output:
-    tuple path("multiqc_report.html"), path("*/multiqc_data.json")
-
-    script:
-    def config = "\$(realpath config.yaml)"
-    """
-    multiqc $rundir \\
-        --template c3g \\
-        --runprocessing \\
-        --interactive \\
-        --config ${config}
-    """
-}
-
-process GenapUpload {
-    executor 'local'
-
-    input:
-    tuple path(report_html), val(multiqc)
-
-    """
-    sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/2022/${multiqc.flowcell}.report.html
-    chmod 664 /datahub297/MGI_validation/2022/${multiqc.flowcell}.report.html
-    EOF
-    """
-}
-
-workflow RunSpecific {
-    Channel.fromPath(params.rundir)
-    | map { [it, file(params.mgi.multiqc_config)] }
-    | RunMultiQC
-    | map { html, json -> [html, new MultiQC(json)]} \
-    | GenapUpload
-}
-
-workflow WatchForCheckpoints {
-    log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone"
-    checkpoints = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.done")
-
-    checkpoints
-    | map { [it.getParent().getParent().getParent(), file(params.mgi.multiqc_config)] }
-    | RunMultiQC
-    | map { html, json -> [html, new MultiQC(json)]} \
-    | GenapUpload
-}
-
-workflow WatchForFinish {
-    log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
-    doneFiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
-
-    doneFiles
-    | map { [it.getParent().getParent().getParent(), file(params.mgi.multiqc_config)] }
-    | RunMultiQC
-    | map { html, json -> [html, new MultiQC(json)]} \
-    | EmailAlertFinish
-}
-
-workflow Monitors {
-    WatchForCheckpoints()
-    WatchForFinish()
-}
-
-workflow G400 {
-    take:
-    eventfiles
-
-    main:
+workflow WatchEventfiles {
     def db = new MetadataDB(params.db, log)
+    db.setup()
+
+    // Watch for new (readable) eventfiles
+    Channel.watchPath(params.neweventpath).branch {
+        unreadable: !it.canRead()
+        readable: true
+            return new Eventfile(it)
+    }.set{ newEventfilesRaw }
+
+    newEventfilesRaw.unreadable.map { log.warn ("Cannot read event file ${it}") }
+    newEventfilesRaw.readable.branch {
+        empty: it.isEmpty()
+        mgit7: it.isMgiT7()
+    }.set{ newEventfiles }
+
+    newEventfiles.empty.map { log.warn ("Empty event file: ${it}") }
+
+    emit:
+    mgit7 = newEventfiles.mgit7
 }
 
-workflow T7 {
+
+workflow MatchEventfilesWithT7Runs {
     take:
     eventfiles
 
@@ -238,8 +146,7 @@ workflow T7 {
     .map { new MgiFlagfile(it) }
     .map { db.insert(it) }
 
-    // *New* flag files should be stored and then
-    //   checked to see if we should begin processing
+    // New flag files should be stored and then checked to see if we should begin processing
     log.info("Watching for new MGI T7 flag files at '${params.mgi.t7.flags}'")
     Channel.watchPath(params.mgi.t7.flags)
     .map { new MgiFlagfile(it) }
@@ -266,7 +173,13 @@ workflow T7 {
     EventfilesForRunning
     | mix(EventfilesForRunningFromFlagfiles)
     | combine(GetGenpipes.out)
-    | BeginRunT7
     | EmailAlertStart
-    | map { Eventfile evt -> db.markAsLaunched(evt) }
+    // | BeginRunT7
+    // | map { Eventfile evt -> db.markAsLaunched(evt) }
+}
+
+
+workflow Launch {
+    WatchEventfiles()
+    MatchEventfilesWithT7Runs(WatchEventfiles.out.mgit7)
 }
