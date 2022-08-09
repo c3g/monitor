@@ -41,7 +41,7 @@ process RunMultiQC {
     executor 'local'
 
     input:
-    val(rundir)
+    tuple path(rundir), path(donefile)
 
     output:
     tuple path("multiqc_report.html"), path("*/multiqc_data.json")
@@ -71,7 +71,7 @@ process GenapUpload {
 workflow WatchCheckpoints {
     log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone"
     Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone")
-    | map { [it.getParent().getParent().getParent()] }
+    | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | GenapUpload
@@ -80,7 +80,7 @@ workflow WatchCheckpoints {
 workflow WatchFinish {
     log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
     Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
-    | map { [it.getParent().getParent().getParent()] }
+    | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | (EmailAlertFinish & GenapUpload)
