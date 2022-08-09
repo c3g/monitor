@@ -80,12 +80,14 @@ process BeginRunT7 {
     val eventfile
 
     script:
-    def custom_ini = params.mgi.t7.custom_ini ? Paths.get(projectDir.toString(), params.mgi.t7.custom_ini) : ""
+    def custom_ini = params?.mgi?.t7?.custom_ini ?: ""
     def genpipes = "\$(realpath genpipes)"
-    def splitbarcodeDemux = (params.mgi.t7.demux) ? "--splitbarcode-demux" : ""
+    def splitbarcodeDemux = (eventfile.platform == "mgit7" && params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
+    // def out_dirname = []
+    // def outpath = Paths.get(params.mgi.outdir, )
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
-module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
+module use \$MUGQIC_INSTALL_HOME_PRIVAT E/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
 mkdir -p ${params.mgi.outdir}/${eventfile.flowcell}

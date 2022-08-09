@@ -41,7 +41,7 @@ process RunMultiQC {
     executor 'local'
 
     input:
-    path(rundir)
+    val(rundir)
 
     output:
     tuple path("multiqc_report.html"), path("*/multiqc_data.json")
