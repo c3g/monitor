@@ -2,8 +2,8 @@
 @Grab(group='org.xerial', module='sqlite-jdbc', version='3.36.0.3')
 
 import groovy.sql.Sql
-import groovy.text.markup.*
-import groovy.text.*
+import groovy.text.markup.TemplateConfiguration
+import groovy.text.markup.MarkupTemplateEngine
 
 params.skiprescan=false
 params.nomail=false
@@ -37,8 +37,10 @@ process EmailAlertFinish {
 
 
 process RunMultiQC {
+    tag { donefile.getBaseName() }
     module 'mugqic_dev/MultiQC/runprocessing-dev'
     executor 'local'
+    maxForks 1
 
     input:
     tuple path(rundir), path(donefile)
@@ -56,6 +58,7 @@ process RunMultiQC {
 
 process GenapUpload {
     executor 'local'
+    maxForks 1
 
     input:
     tuple path(report_html), val(multiqc)
