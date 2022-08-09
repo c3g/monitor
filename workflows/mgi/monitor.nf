@@ -57,6 +57,7 @@ process RunMultiQC {
 }
 
 process GenapUpload {
+    tag { multiqc.flowcell }
     executor 'local'
     maxForks 1
 
