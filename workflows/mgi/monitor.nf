@@ -5,9 +5,6 @@ import groovy.sql.Sql
 import groovy.text.markup.TemplateConfiguration
 import groovy.text.markup.MarkupTemplateEngine
 
-params.skiprescan=false
-params.nomail=false
-
 process EmailAlertFinish {
     executor 'local'
 
@@ -72,13 +69,43 @@ process GenapUpload {
     """
 }
 
+process SummaryReportUpload {
+    tag { report.name - "_L01.summaryReport.html" }
+    maxForks 1
+
+    input:
+    path(report)
+
+    """
+    sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
+    put $report /datahub297/MGI_validation/2022/${report.name}
+    chmod 664 /datahub297/MGI_validation/2022/${report.name}
+    EOF
+    """
+}
+
 workflow WatchCheckpoints {
     log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone"
-    Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone")
+    donefiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone")
+
+    // Run MultiQC on all donefiles
+    donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | GenapUpload
+
+    // If the donefile is the "basecall" donefile, then we can upload the MGI summaryReport.html
+    donefiles
+    | map { donefile ->
+        reportList = null
+        rundir = donefile.getParent().getParent().getParent()
+        rundir.eachFileRecurse(groovy.io.FileType.FILES) {
+            if(!reportList && it.name.endsWith('.summaryReport.html')) { reportList = it }
+        }
+        reportList
+    }
+    | SummaryReportUpload
 }
 
 workflow WatchFinish {
@@ -87,5 +114,5 @@ workflow WatchFinish {
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
-    | (EmailAlertFinish & GenapUpload)
+    | (GenapUpload & EmailAlertFinish)
 }
