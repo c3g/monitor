@@ -57,6 +57,8 @@ process GenapUpload {
     tag { multiqc.flowcell }
     executor 'local'
     maxForks 1
+    errorStrategy 'retry'
+    maxErrors 3
 
     input:
     tuple path(report_html), val(multiqc)
@@ -71,6 +73,8 @@ process GenapUpload {
 
 process SummaryReportUpload {
     tag { report.name - "_L01.summaryReport.html" }
+    errorStrategy 'retry'
+    maxErrors 3
     maxForks 1
 
     input:
