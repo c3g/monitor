@@ -73,6 +73,7 @@ process GenapUpload {
 
 process SummaryReportUpload {
     tag { report.name - "_L01.summaryReport.html" }
+    executor 'local'
     errorStrategy 'retry'
     maxErrors 3
     maxForks 1
