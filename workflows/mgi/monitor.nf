@@ -19,7 +19,7 @@ process EmailAlertFinish {
 
     TemplateConfiguration config = new TemplateConfiguration()
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
-    def templateFile = new File("$projectDir/assets/email_MGI_run_finish.tpl")
+    def templateFile = new File("$projectDir/assets/email_MGI_run_finish.groovy")
     Writable output = engine.createTemplate(templateFile).make(email_fields)
 
     sendMail {
