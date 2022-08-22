@@ -1,9 +1,35 @@
+// == Introduction == //
+// This is an HTML email template that is constructed when MGI runs finish.
+// This template used by the EmailAlertFinish process.
+// When the template is rendered/instantiated, we pass it two objects:
+// - the `run`, which is the MultiQC Groovy object mentioned above
+// - the `workflow`, which is the Nextflow workflow object also mentioned above.
+// The `run` object is used throughout, but `workflow` is only used to pull the commitID in the footer.
+
+
+// == Testing == //
+// To test modifications to this template, there is the `EmailDebug` workflow, which looks for changes to
+// this file and upon detecting a change, regenerates the template using an example multiqc json file.
+// The demo HTML is written to outputs/testing/email/email_MGI_run_finish.html. I'd recommend setting up
+// a live watcher so that you can just save the template and the page gets updated in-browser instantly.
+
+
+// == Helpers == //
+// Here we define a couple of helpful variables/function to make the rest of the
+// template a little cleaner.
+Date now = new Date()
 def nfGeneral = java.text.NumberFormat.getInstance()
+def yield = run.generalStats.inject(0) { count, item -> item.value.yield as BigInteger }
 def nfPercent = java.text.NumberFormat.getPercentInstance()
 nfPercent.setMinimumFractionDigits(1)
-Date date = new Date()
-def yield = run.generalStats.inject(0) { count, item -> item.value.yield as BigInteger }
 
+def dateFormat(date) {
+    date.format('yyyy-MM-dd HH:mm:ss z')
+}
+
+
+// == HTML Template == //
+// The actual temlate code.
 yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
     head {
@@ -15,7 +41,7 @@ html(lang:'en') {
             h3 "Flowcell: ${run.flowcell}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2022/${run.flowcell}.report.html", "on GenAP"
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2022/${run.flowcell}.report.html", "on GenAP" )
                 span "."
             }
             ul {
@@ -37,7 +63,7 @@ html(lang:'en') {
                 tbody {
                     run
                     .generalStats
-                    .sort{ it.key }
+                    .sort { it.key }
                     .each {
                         def name = it.key
                         def vals = it.value
@@ -53,14 +79,9 @@ html(lang:'en') {
                 }
             }
             p(style:"color: #999999; font-size: 12px") {
-                span workflow.commitId ? "Email generated at ${dateFormat(date)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(date)}."
+                span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }
             p(style:"color: #999999; font-size: 12px", "C3G Run Processing.")
         }
     }
 }
-
-def dateFormat(date) {
-    date.format('yyyy-MM-dd HH:mm:ss z')
-}
-
