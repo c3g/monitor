@@ -40,7 +40,7 @@ workflow.onComplete {
             """.stripIndent()
 
         sendMail {
-            to 'robert.syme@mcgill.ca'
+            to 'edouard.henrion@mcgill.ca'
             from 'abacus.genome@mail.mcgill.ca'
             subject 'Alert: Monitor stopped'
             body: msg
