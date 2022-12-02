@@ -91,7 +91,7 @@ process SummaryReportUpload {
 
 workflow WatchCheckpoints {
     log.info "Watching for checkpoint files at ${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone"
-    donefiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone")
+    donefiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/checkpoint/*.stepDone", 'create,modify')
 
     // Run MultiQC on all donefiles
     donefiles
@@ -115,7 +115,7 @@ workflow WatchCheckpoints {
 
 workflow WatchFinish {
     log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
-    Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done")
+    Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done", 'create,modify')
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
