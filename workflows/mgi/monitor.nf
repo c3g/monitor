@@ -35,7 +35,7 @@ process EmailAlertFinish {
 
 process RunMultiQC {
     tag { donefile.getBaseName() }
-    module 'mugqic_dev/MultiQC/runprocessing-dev'
+    module 'mugqic_dev/MultiQC_C3G/1.12_beta'
     executor 'local'
     maxForks 1
 
@@ -65,8 +65,8 @@ process GenapUpload {
 
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/2022/${multiqc.flowcell}.report.html
-    chmod 664 /datahub297/MGI_validation/2022/${multiqc.flowcell}.report.html
+    put $report_html /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
+    chmod 664 /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
     EOF
     """
 }
@@ -83,8 +83,8 @@ process SummaryReportUpload {
 
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report /datahub297/MGI_validation/2022/${report.name}
-    chmod 664 /datahub297/MGI_validation/2022/${report.name}
+    put $report /datahub297/MGI_validation/2023/${report.name}
+    chmod 664 /datahub297/MGI_validation/2023/${report.name}
     EOF
     """
 }
