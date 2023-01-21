@@ -41,7 +41,7 @@ html(lang:'en') {
             h3 "Flowcell: ${run.flowcell}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2022/${run.flowcell}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2023/${run.flowcell}.report.html", "on GenAP" )
                 span "."
             }
             ul {
