@@ -8,7 +8,7 @@
 
 
 // == Testing == //
-// To test modifications to this template, there is the `EmailDebug` workflow, which looks for changes to
+// To test modifications to this template, there is the `Debug` workflow, which looks for changes to
 // this file and upon detecting a change, regenerates the template using an example multiqc json file.
 // The demo HTML is written to outputs/testing/email/email_MGI_run_finish.html. I'd recommend setting up
 // a live watcher so that you can just save the template and the page gets updated in-browser instantly.
@@ -27,21 +27,20 @@ def dateFormat(date) {
     date.format('yyyy-MM-dd HH:mm:ss z')
 }
 
-
 // == HTML Template == //
 // The actual temlate code.
 yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
     head {
         meta('http-equiv':'"Content-Type" content="text/html; charset=utf-8"')
-        title("MGI Run finished: ${run.flowcell}")
+        title("MGI Run finished: ${run.run}")
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
-            h3 "Flowcell: ${run.flowcell}"
+            h3 "Run: ${run.run} (${run.flowcell})"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2023/${run.flowcell}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${run.year}/${run.run}.report.html", "on GenAP" )
                 span "."
             }
             ul {

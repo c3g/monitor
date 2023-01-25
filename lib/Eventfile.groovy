@@ -60,6 +60,14 @@ class Eventfile {
         return this.rows().next()?.ContainerName
     }
 
+    Date StartDate() {
+        return Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
+    }
+
+    String year() {
+        return this.StartDate.getYear()
+    }
+
     Boolean isMgiT7(sun.nio.fs.UnixPath eventfile) {
         return this.flowcell() ==~ /^E1\d+$/
     }
