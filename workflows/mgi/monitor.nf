@@ -15,11 +15,19 @@ process EmailAlertFinish {
     !params.nomail
 
     exec:
-    def email_fields = [run: multiqc_json, workflow: workflow]
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc_json.flowcell)
+    def platform = (evt.platform == "illumina") ? "Illumina" : "MGI"
+    def email_fields = [
+        run: multiqc_json,
+        workflow: workflow,
+        platform: platform,
+        year: evt.year
+    ]
 
     TemplateConfiguration config = new TemplateConfiguration()
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
-    def templateFile = new File("$projectDir/assets/email_MGI_run_finish.groovy")
+    def templateFile = new File("$projectDir/assets/email_run_finish.groovy")
     Writable output = engine.createTemplate(templateFile).make(email_fields)
 
     sendMail {
@@ -31,7 +39,6 @@ process EmailAlertFinish {
         output.toString()
     }
 }
-
 
 process RunMultiQC {
     tag { donefile.getBaseName() }
@@ -63,10 +70,13 @@ process GenapUpload {
     input:
     tuple path(report_html), val(multiqc)
 
+    script:
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc.flowcell)
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
-    chmod 664 /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
+    put $report_html /datahub297/MGI_validation/${evt.year}/${multiqc.flowcell}.report.html
+    chmod 664 /datahub297/MGI_validation/${evt.year}/${multiqc.flowcell}.report.html
     EOF
     """
 }
@@ -81,10 +91,13 @@ process SummaryReportUpload {
     input:
     path(report)
 
+    script:
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc.flowcell)
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report /datahub297/MGI_validation/2023/${report.name}
-    chmod 664 /datahub297/MGI_validation/2023/${report.name}
+    put $report /datahub297/MGI_validation/${evt.year}/${report.name}
+    chmod 664 /datahub297/MGI_validation/${evt.year}/${report.name}
     EOF
     """
 }

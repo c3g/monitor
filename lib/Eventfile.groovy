@@ -61,15 +61,33 @@ class Eventfile {
     }
 
     Date StartDate() {
-        return Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
+        return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
     }
 
-    String year() {
-        return this.StartDate.getYear()
+    String getYear() {
+        return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd").getYear()
     }
 
     Boolean isMgiT7(sun.nio.fs.UnixPath eventfile) {
         return this.flowcell() ==~ /^E1\d+$/
+    }
+
+    Boolean isMgiG400(sun.nio.fs.UnixPath eventfile) {
+        return this.flowcell() ==~ /^V3\d+$/
+    }
+
+    Boolean isIllumina(sun.nio.fs.UnixPath eventfile) {
+        return !(this.isMgiT7() || this.isMgiG400())
+    }
+
+    String getPlatform() {
+        if (this.isMgiG400()) {
+            return "mgig400"
+        } else if (this.isMgiT7()) {
+            return "mgit7"
+        } else if (this.isIllumina()) {
+            return "illumina"
+        }
     }
 
     String toString() {

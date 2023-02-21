@@ -5,7 +5,7 @@ include { Launch as MgiLaunch } from './workflows/mgi/launch'
 include { WatchCheckpoints as MgiWatchCheckpoints } from './workflows/mgi/monitor'
 include { WatchFinish as MgiWatchFinish } from './workflows/mgi/monitor'
 
-include { FlagfileDebug; OnFinishDebug } from './workflows/testing'
+include { FlagfileDebug; OnStartDebug; OnFinishDebug } from './workflows/testing'
 
 workflow Monitor {
     MgiWatchCheckpoints()
@@ -23,7 +23,15 @@ workflow MonitorAndLaunch {
 }
 
 workflow Debug {
+    def db = new MetadataDB(params.db, log)
+    db.setup()
+
+    Channel.fromPath("$projectDir/assets/testing/clarity.event.example.txt")
+    .map { new Eventfile(it) }
+    .map { db.insert(it) }
+
     // FlagfileDebug()
+    OnStartDebug()
     OnFinishDebug()
 }
 

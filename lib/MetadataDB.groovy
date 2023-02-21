@@ -12,7 +12,7 @@ class MetadataDB {
     Sql db
     Logger log
 
-    MetadataDB(path, log) {
+    MetadataDB(path, log=null) {
         this.db = Sql.newInstance("jdbc:sqlite:$path", "org.sqlite.JDBC")
         this.log = log
     }
