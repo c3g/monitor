@@ -65,8 +65,8 @@ process GenapUpload {
 
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
-    chmod 664 /datahub297/MGI_validation/2023/${multiqc.flowcell}.report.html
+    put $report_html /datahub297/MGI_validation/2023/${multiqc.run}.report.html
+    chmod 664 /datahub297/MGI_validation/2023/${multiqc.run}.report.html
     EOF
     """
 }
