@@ -23,8 +23,8 @@ process OnFinishHTML {
 }
 
 workflow OnFinishDebug {
-    Channel.watchPath("assets/*.groovy", 'create,modify')
-    | map { [it, new MultiQC('assets/testing/multiqc_data.example.json')] }
+    Channel.watchPath("$projectDir/assets/*.groovy", 'create,modify')
+    | map { [it, new MultiQC("$projectDir/assets/testing/multiqc_data.example.json")] }
     | OnFinishHTML
 }
 

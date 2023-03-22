@@ -102,13 +102,14 @@ workflow WatchCheckpoints {
 
     // If the donefile is the "basecall" donefile, then we can upload the MGI summaryReport.html
     donefiles
+    | filter { donefile -> donefile.startsWith('basecall') }
     | map { donefile ->
-        reportList = null
+        reportList = []
         rundir = donefile.getParent().getParent().getParent()
         rundir.eachFileRecurse(groovy.io.FileType.FILES) {
-            if(!reportList && it.name.endsWith('.summaryReport.html')) { reportList = it }
+            if(it.name.endsWith('.summaryReport.html')) { reportList.append(it) }
         }
-        reportList
+        reportList ?: null
     }
     | SummaryReportUpload
 }
