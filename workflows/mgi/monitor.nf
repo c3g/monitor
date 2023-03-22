@@ -75,8 +75,8 @@ process GenapUpload {
     def evt = db.latestEventfile(multiqc.flowcell)
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/${evt.year}/${multiqc.flowcell}.report.html
-    chmod 664 /datahub297/MGI_validation/${evt.year}/${multiqc.flowcell}.report.html
+    put $report_html /datahub297/MGI_validation/${evt.year}/${multiqc.run}.report.html
+    chmod 664 /datahub297/MGI_validation/${evt.year}/${multiqc.run}.report.html
     EOF
     """
 }
@@ -115,13 +115,14 @@ workflow WatchCheckpoints {
 
     // If the donefile is the "basecall" donefile, then we can upload the MGI summaryReport.html
     donefiles
+    | filter { donefile -> donefile.startsWith('basecall') }
     | map { donefile ->
-        reportList = null
+        reportList = []
         rundir = donefile.getParent().getParent().getParent()
         rundir.eachFileRecurse(groovy.io.FileType.FILES) {
-            if(!reportList && it.name.endsWith('.summaryReport.html')) { reportList = it }
+            if(it.name.endsWith('.summaryReport.html')) { reportList.append(it) }
         }
-        reportList
+        reportList ?: null
     }
     | SummaryReportUpload
 }
