@@ -19,9 +19,10 @@ process OnStartHTML {
     def rows = parseCsv(testEventFile.text, separator: '\t').collect()
     def platform = (testEventFile.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
-        flowcell: testEventFile.flowcell,
+        flowcell: multiqc_json.flowcell,
         eventfile_rows: rows,
-        platform: platform
+        platform: platform,
+        workflow: workflow
     ]
 
     TemplateConfiguration config = new TemplateConfiguration()
@@ -58,7 +59,7 @@ process OnFinishHTML {
     File templateFile = new File(template.toString())
     Writable output = engine.createTemplate(templateFile).make(email_fields)
     File finalHtml = new File("${task.workDir}/email_run_finish.html")
-    finalHtml.append(output.toString())
+    finalHtml.text = output.toString()
 }
 
 workflow OnStartDebug {

@@ -27,7 +27,7 @@ workflow Debug {
     db.setup()
 
     Channel.fromPath("$projectDir/assets/testing/clarity.event.example.txt")
-    .map { new Eventfile(it) }
+    .map { new Eventfile(it, log) }
     .map { db.insert(it) }
 
     // FlagfileDebug()

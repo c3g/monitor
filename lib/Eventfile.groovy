@@ -4,6 +4,8 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 import java.nio.file.Path
 import java.nio.file.Files
+import java.text.SimpleDateFormat
+import org.slf4j.Logger
 
 import nextflow.processor.TaskPath
 
@@ -14,25 +16,29 @@ class Eventfile {
     Long lastmodified
     Long lastlaunched
     String flowcell
+    Logger log
 
-    Eventfile(Path path) {
+    Eventfile(Path path, Logger log) {
         this.text = path.getText()
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
+        this.log = log
     }
 
-    Eventfile(TaskPath path) {
+    Eventfile(TaskPath path, Logger log) {
         this.text = path.getText()
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
+        this.log = log
     }
 
-    Eventfile(String text, String filename, Long lastlaunched) {
+    Eventfile(String text, String filename, Long lastlaunched, Logger log) {
         this.text = text
         this.filename = filename
         this.lastlaunched = lastlaunched
         this.flowcell = this.ContainerName()
+        this.log = log
     }
 
     def rows() {
@@ -60,12 +66,17 @@ class Eventfile {
         return this.rows().next()?.ContainerName
     }
 
-    Date StartDate() {
+    Date getStartDate() {
         return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
     }
 
-    String getYear() {
-        return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd").getYear()
+    def getYear() {
+        def format = new SimpleDateFormat("yyyy-MM-dd")
+        def date = format.parse(this.rows().next()?.'Start Date')
+        return String.valueOf(1900 + date.year)
+        // println(date.year)
+        // return 1900 + date.year
+        // return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd").getYear()
     }
 
     Boolean isMgiT7(sun.nio.fs.UnixPath eventfile) {

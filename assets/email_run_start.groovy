@@ -13,7 +13,11 @@
 // == Helpers == //
 // Here we define a couple of helpful variables/function to make the rest of the
 // template a little cleaner.
+Date now = new Date()
 
+def dateFormat(date) {
+    date.format('yyyy-MM-dd HH:mm:ss z')
+}
 
 // == HTML Template == //
 // The actual temlate code.
@@ -28,23 +32,23 @@ html(lang:'en') {
             h2 "New run processing started"
             h3 {
                 "Flowcell:"
-                span(style:'font-weight: bold', ${flowcell})
+                span(style:'font-weight: bold', flowcell)
             }
-            table(style:"width:100%; max-width:100%; border-spacing: 0; border-collapse: collapse; border:0; margin-bottom: 30px;") {
-                tbody(style:"border-bottom: 1px solid #ddd;") {
-                    tr  {
-                        th style:'text-align:left; padding: 8px 0; line-height: 1.42857143; vertical-align: top; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;', Project Name
-                        th style:'text-align:left; padding: 8px; line-height: 1.42857143; vertical-align: top; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;', Samples
+            table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
+                tbody {
+                    tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {
+                        th(style:'padding: 5px 10px', "Project Name")
+                        th(style:'padding: 5px 10px', "Samples")
                     }
                     eventfile_rows.countBy{it.ProjectName}.each { projectname, count ->
-                        tr(style:'line-height: 1.42857143; vertical-align: top; ') {
-                            td $projectname
-                            td $count ${count == 1 ? "sample" : "samples"}
+                        tr(style:'border: 2px solid #dddddd;') {
+                            td style:"padding: 5px 10px; font-weight: bold", projectname
+                            td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
                         }
                     }
-                    tr(style:'text-align:left; padding: 8px; line-height: 1.42857143; vertical-align: top; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;') {
-                        td Total
-                        td ${eventfile_rows.size()} ${eventfile_rows.size() == 1 ? "sample" : "samples"}
+                    tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
+                        td "Total"
+                        td  eventfile_rows.size() == 1 ? "${eventfile_rows.size()} sample" : "${eventfile_rows.size()} samples"
                     }
                     // run
                     // .generalStats
@@ -66,10 +70,9 @@ html(lang:'en') {
             p(style:"color: #999999; font-size: 12px") {
                 span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }
-            p(style:"color: #999999; font-size: 12px", "C3G Run Processing.")
             p {
                 span(class:"apple-link", style:"color: #999999; font-size: 12px; text-align: center;") {
-                    a(href:"https://c3g.ca/", style:"text-decoration: none; color: #999999; font-size: 12px; text-align: center;", C3G Run Processing)
+                    a(href:"https://c3g.ca/", style:"text-decoration: none; color: #999999; font-size: 12px; text-align: center;", "C3G Run Processing")
                 }
             }
         }

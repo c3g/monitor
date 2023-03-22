@@ -39,9 +39,7 @@ class MultiQC {
 
     def getYear() {
         def format = new SimpleDateFormat("yyMMdd")
-        println("yooooooo")
         def date = format.parse(this.data['config_analysis_dir'][0].tokenize('_').first())
-        println(date)
         return 1900 + date.year
     }
 

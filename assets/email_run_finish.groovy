@@ -42,7 +42,7 @@ html(lang:'en') {
             h3 "Run: ${run.run} (${run.flowcell})"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${event.}/${run.run}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${event.year}/${run.run}.report.html", "on GenAP" )
                 span "."
             }
             ul {
@@ -83,6 +83,11 @@ html(lang:'en') {
                 span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }
             p(style:"color: #999999; font-size: 12px", "C3G Run Processing.")
+            // p {
+            //     span(class:"apple-link", style:"color: #999999; font-size: 12px; text-align: center;") {
+            //         a(href:"https://c3g.ca/", style:"text-decoration: none; color: #999999; font-size: 12px; text-align: center;", "C3G Run Processing")
+            //     }
+            // }
         }
     }
 }

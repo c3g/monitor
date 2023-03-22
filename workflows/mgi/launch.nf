@@ -164,7 +164,7 @@ workflow WatchEventfiles {
     Channel.watchPath(params.neweventpath).branch {
         unreadable: !it.canRead()
         readable: true
-            return new Eventfile(it)
+            return new Eventfile(it, log)
     }.set{ newEventfilesRaw }
 
     newEventfilesRaw.unreadable.map { log.warn ("Cannot read event file ${it}") }

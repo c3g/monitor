@@ -92,10 +92,12 @@ class MetadataDB {
         ''', [flowcell:flowcell]
         )
         if(rows.size() == 0) {
+            log.debug("Database | not found !")
             return null
         } else {
             def row = rows[0]
-            return new Eventfile(row.data, row.filename, row.lastlaunched)
+            log.debug("Database | found !")
+            return new Eventfile(row.data, row.filename, row.lastlaunched, log)
         }
     }
 
