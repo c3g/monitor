@@ -1,7 +1,7 @@
 // == Introduction == //
-// This template expects three variables to be defined - `flowcell`, `eventfile_rows` and `platofrm`.
+// This template expects three variables to be defined - `flowcell`, `samples` and `platofrm`.
 // The template is instantiated (in the `EmailAlertStart` process) like so:
-// email_fields = [flowcell: eventfile.flowcell, eventfile_rows: rows, platform: platform]
+// email_fields = [flowcell: eventfile.flowcell, samples: rows, platform: platform]
 // def html_template = engine.createTemplate(html).make(email_fields)
 
 // == Testing == //
@@ -40,7 +40,7 @@ html(lang:'en') {
                         th(style:'padding: 5px 10px', "Project Name")
                         th(style:'padding: 5px 10px', "Samples")
                     }
-                    eventfile_rows.countBy{it.ProjectName}.each { projectname, count ->
+                    samples.countBy{it.ProjectName}.each { projectname, count ->
                         tr(style:'border: 2px solid #dddddd;') {
                             td style:"padding: 5px 10px; font-weight: bold", projectname
                             td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
@@ -48,7 +48,7 @@ html(lang:'en') {
                     }
                     tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
                         td "Total"
-                        td  eventfile_rows.size() == 1 ? "${eventfile_rows.size()} sample" : "${eventfile_rows.size()} samples"
+                        td  samples.size() == 1 ? "${samples.size()} sample" : "${samples.size()} samples"
                     }
                     // run
                     // .generalStats
@@ -108,7 +108,7 @@ html(lang:'en') {
 //                          style='text-align:left; padding: 8px; line-height: 1.42857143; vertical-align: top; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;'>
 //                          Samples</th>
 //                  </tr>
-//                  <% eventfile_rows.countBy{it.ProjectName}.each { projectname, count -> %>
+//                  <% samples.countBy{it.ProjectName}.each { projectname, count -> %>
 //                      <tr style='line-height: 1.42857143; vertical-align: top; '>
 //                          <td>$projectname</td>
 //                          <td>$count ${count == 1 ? "sample" : "samples"}</td>
@@ -117,7 +117,7 @@ html(lang:'en') {
 //                          <tr
 //                              style='text-align:left; padding: 8px; line-height: 1.42857143; vertical-align: top; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;'>
 //                              <td>Total</td>
-//                              <td>${eventfile_rows.size()} ${eventfile_rows.size() == 1 ? "sample" : "samples"}</td>
+//                              <td>${samples.size()} ${samples.size() == 1 ? "sample" : "samples"}</td>
 //                          </tr>
 //              </tbody>
 //          </table>

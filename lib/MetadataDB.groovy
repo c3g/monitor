@@ -38,6 +38,17 @@ class MetadataDB {
             )
             """.stripIndent()
         )
+
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS runinfofiles (
+                filename TEXT NOT NULL,
+                data TEXT NOT NULL UNIQUE,
+                lastmodified INTEGER NOT NULL,
+                flowcell TEXT NOT NULL,
+                lastlaunched INTEGER
+            )
+            """.stripIndent()
+        )
     }
 
     def insert(MgiFlagfile ff) {
@@ -72,6 +83,22 @@ class MetadataDB {
         return evt
     }
 
+    def insert(RunInfofile runinf) {
+        log.debug("Database | Inserting new runinfofiles (${runinf.flowcell}) into database")
+        db.execute(
+            """
+            INSERT INTO runinfofiles (filename, flowcell, lastmodified, data)
+            VALUES (?,?,?,?)
+            ON CONFLICT (data) DO
+            UPDATE SET
+                lastmodified=excluded.lastmodified,
+                filename=excluded.filename
+            """.stripIndent(),
+            [runinf.filename, runinf.flowcell, runinf.lastmodified, runinf.data.toString()]
+        )
+        return runinf
+    }
+
     Eventfile latestEventfile(String flowcell) {
         log.debug("Database | Looking for event file for flowcell '$flowcell'")
         def rows = db.rows('''
@@ -101,8 +128,43 @@ class MetadataDB {
         }
     }
 
+    RunInfofile latestRunInfofile(String flowcell) {
+        log.debug("Database | Looking for runinfo file for flowcell '$flowcell'")
+        def rows = db.rows('''
+        WITH ranked_messages AS (
+            SELECT
+                filename,
+                flowcell,
+                data,
+                lastmodified,
+                lastlaunched,
+                ROW_NUMBER() OVER (PARTITION BY flowcell ORDER BY lastmodified DESC) AS rn
+            FROM runinfofiles AS r
+            WHERE flowcell = :flowcell
+        )
+        SELECT * FROM ranked_messages
+        WHERE rn = 1
+        ORDER BY lastmodified DESC;
+        ''', [flowcell:flowcell]
+        )
+        if(rows.size() == 0) {
+            log.debug("Database | not found !")
+            return null
+        } else {
+            def row = rows[0]
+            log.debug("Database | found !")
+            return new RunInfofile(row.data, row.filename, row.lastlaunched, log)
+        }
+    }
+
     Boolean hasFlagfile(Eventfile evt) {
         def flowcell = evt.flowcell
+        def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        rows.size() >= 0
+    }
+
+    Boolean hasFlagfile(RunInfofile runinf) {
+        def flowcell = runinf.flowcell
         def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
@@ -118,24 +180,14 @@ class MetadataDB {
         }
     }
 
-    def lastestEventfileForFlowcell(String flowcell) {
-        log.debug("Database | Looking for event file for flowcell '$flowcell'")
-        def rows = db.rows('''
-        WITH ranked_messages AS (
-            SELECT
-                filename,
-                flowcell,
-                data,
-                lastmodified,
-                ROW_NUMBER() OVER (PARTITION BY flowcell ORDER BY lastmodified DESC) AS rn
-            FROM eventfiles AS e
-            WHERE flowcell = :flowcell
-        )
-        SELECT * FROM ranked_messages
-        WHERE rn = 1
-        ORDER BY lastmodified DESC;
-        ''', [flowcell:flowcell]
-        )
-        rows.size() == 0 ? null : rows[0]
+    def markAsLaunched(RunInfofile runinf) {
+        log.debug("Database | Marking runinfofile as launched '${runinf.flowcell}'")
+        def text = runinf.text
+        def rows = db.rows('SELECT * FROM runinfofiles WHERE data = :data', [data: text])
+        if(rows.size() == 0) {
+            log.warn("Could not find rows to update lastlaunched date")
+        } else {
+            db.execute("UPDATE runinfofiles SET lastlaunched=strftime('%s','now') WHERE data=:data", [data: text])
+        }
     }
 }

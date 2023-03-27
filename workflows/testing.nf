@@ -3,7 +3,7 @@ import groovy.text.markup.MarkupTemplateEngine
 
 import static com.xlson.groovycsv.CsvParser.parseCsv
 
-process OnStartHTML {
+process OnStartClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
 
@@ -20,7 +20,7 @@ process OnStartHTML {
     def platform = (testEventFile.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         flowcell: multiqc_json.flowcell,
-        eventfile_rows: rows,
+        samples: rows,
         platform: platform,
         workflow: workflow
     ]
@@ -33,7 +33,35 @@ process OnStartHTML {
     finalHtml.text = output.toString()
 }
 
-process OnFinishHTML {
+process OnStartFreezemanHTML {
+    publishDir "outputs/testing/email", mode: 'copy'
+    executor 'local'
+
+    input:
+    tuple val(template), val(runinfo_json)
+
+    output:
+    file('*.html')
+
+    exec:
+    def db = new MetadataDB(params.db, log)
+    def platform = (runinfo_json.platform == "illumina") ? "Illumina" : "MGI"
+    def email_fields = [
+        flowcell: runinfo_json.flowcell,
+        samples: runinfo_json.data.samples,
+        platform: platform,
+        workflow: workflow
+    ]
+
+    TemplateConfiguration config = new TemplateConfiguration()
+    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
+    File templateFile = new File(template.toString())
+    Writable output = engine.createTemplate(templateFile).make(email_fields)
+    File finalHtml = new File("${task.workDir}/email_run_start.html")
+    finalHtml.text = output.toString()
+}
+
+process OnFinishClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
 
@@ -62,16 +90,52 @@ process OnFinishHTML {
     finalHtml.text = output.toString()
 }
 
+process OnFinishFreezemanHTML {
+    publishDir "outputs/testing/email", mode: 'copy'
+    executor 'local'
+
+    input:
+    tuple val(template), val(runinfo_json)
+
+    output:
+    file('*.html')
+
+    exec:
+    def db = new MetadataDB(params.db, log)
+    def platform = (runinfo_json.platform == "illumina") ? "Illumina" : "MGI"
+    def email_fields = [
+        run: runinfo_json,
+        workflow: workflow,
+        platform: platform,
+        event: runinfo_json
+    ]
+
+    TemplateConfiguration config = new TemplateConfiguration()
+    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
+    File templateFile = new File(template.toString())
+    Writable output = engine.createTemplate(templateFile).make(email_fields)
+    File finalHtml = new File("${task.workDir}/email_run_finish.html")
+    finalHtml.text = output.toString()
+}
+
 workflow OnStartDebug {
     Channel.watchPath("$projectDir/assets/*start.groovy", 'create,modify')
     | map { [it, new MultiQC("$projectDir/assets/testing/multiqc_data.example.json")] }
-    | OnStartHTML
+    | OnStartClarityHTML
+
+    Channel.watchPath("$projectDir/assets/*start.groovy", 'create,modify')
+    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json", log)] }
+    | OnStartFreezemanHTML
 }
 
 workflow OnFinishDebug {
     Channel.watchPath("$projectDir/assets/*finish.groovy", 'create,modify')
     | map { [it, new MultiQC("$projectDir/assets/testing/multiqc_data.example.json")] }
-    | OnFinishHTML
+    | OnFinishClarityHTML
+
+    Channel.watchPath("$projectDir/assets/*finish.groovy", 'create,modify')
+    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json", log)] }
+    | OnFinishFreezemanHTML
 }
 
 workflow FlagfileDebug {

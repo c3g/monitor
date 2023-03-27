@@ -1,33 +1,68 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-include { Launch as MgiLaunch } from './workflows/mgi/launch'
-include { WatchCheckpoints as MgiWatchCheckpoints } from './workflows/mgi/monitor'
-include { WatchFinish as MgiWatchFinish } from './workflows/mgi/monitor'
+include { Launch as ClarityLaunch } from './workflows/clarity/launch'
+include { Launch as FreezemanLaunch } from './workflows/freezeman/launch'
+include { WatchCheckpoints as ClarityWatchCheckpoints } from './workflows/clarity/monitor'
+include { WatchCheckpoints as FreezemanWatchCheckpoints } from './workflows/freezeman/monitor'
+include { WatchFinish as ClarityWatchFinish } from './workflows/clarity/monitor'
+include { WatchFinish as FreezemanWatchFinish } from './workflows/freezeman/monitor'
 
 include { FlagfileDebug; OnStartDebug; OnFinishDebug } from './workflows/testing'
 
+workflow ClarityMonitor {
+    ClarityWatchCheckpoints()
+    ClarityWatchFinish()
+}
+
+workflow FreezemanMonitor {
+    FreezemanWatchCheckpoints()
+    FreezemanWatchFinish()
+}
+
 workflow Monitor {
-    MgiWatchCheckpoints()
-    MgiWatchFinish()
+    ClarityMonitor()
+    FreezemanMonitor()
+}
+
+workflow CLaunch {
+    ClarityLaunch()
+}
+
+workflow FLaunch {
+    FreezemanLaunch()
 }
 
 workflow Launch {
-    MgiLaunch()
+    CLaunch()
+    FLaunch()
+}
+
+workflow ClarityMonitorAndLaunch {
+    ClarityMonitor()
+    CLaunch()
+}
+
+workflow FreezemanMonitorAndLaunch {
+    FreezemanMonitor()
+    FLaunch()
 }
 
 workflow MonitorAndLaunch {
-    MgiWatchCheckpoints()
-    MgiWatchFinish()
-    MgiLaunch()
+    FreezemanMonitorAndLaunch()
+    ClarityMonitorAndLaunch()
 }
 
 workflow Debug {
     def db = new MetadataDB(params.db, log)
     db.setup()
 
-    Channel.fromPath("$projectDir/assets/testing/clarity.event.example.txt")
+    Channel.fromPath("$projectDir/assets/testing/events/clarity.event.example.txt")
     .map { new Eventfile(it, log) }
+    .map { db.insert(it) }
+
+    Channel.fromPath("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json")
+    .map { new RunInfofile(it, log) }
     .map { db.insert(it) }
 
     // FlagfileDebug()

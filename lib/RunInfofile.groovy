@@ -9,8 +9,10 @@ import org.slf4j.Logger
 
 import nextflow.processor.TaskPath
 
-class Eventfile {
-    String text
+import groovy.json.JsonSlurper
+
+class RunInfofile {
+    Map data
     String path
     String filename
     Long lastmodified
@@ -18,31 +20,37 @@ class Eventfile {
     String flowcell
     Logger log
 
-    Eventfile(Path path, Logger log) {
-        this.text = path.getText()
+    RunInfofile(String path, Logger log) {
+        def file = new File(path)
+        this.data = new JsonSlurper().parseText(file.text)
+        this.filename = file.getName()
+        this.lastmodified = file.lastModified()
+        this.flowcell = this.ContainerName()
+        this.log = log
+    }
+
+    RunInfofile(Path path, Logger log) {
+        this.data = new JsonSlurper().parseText(path.getText())
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
         this.log = log
     }
 
-    Eventfile(TaskPath path, Logger log) {
-        this.text = path.getText()
+    RunInfofile(TaskPath path, Logger log) {
+        this.data = new JsonSlurper().parseText(path.getText())
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
+        this.flowcell = this.ContainerName()
         this.log = log
     }
 
-    Eventfile(String text, String filename, Long lastlaunched, Logger log) {
-        this.text = text
+    RunInfofile(String data, String filename, Long lastlaunched, Logger log) {
+        this.data = new JsonSlurper().parseText(data)
         this.filename = filename
         this.lastlaunched = lastlaunched
         this.flowcell = this.ContainerName()
         this.log = log
-    }
-
-    def rows() {
-        parseCsv(this.text, separator: '\t')
     }
 
     Boolean alreadyLaunched() {
@@ -50,11 +58,11 @@ class Eventfile {
     }
 
     Boolean notEmpty() {
-        this.rows().size() > 0
+        this.data['samples'].size() > 0
     }
 
     Boolean isEmpty() {
-        this.rows().size() == 0
+        this.data['samples'].size() == 0
     }
 
     // TODO: Deprecate this method
@@ -63,28 +71,28 @@ class Eventfile {
     }
 
     String ContainerName() {
-        return this.rows().next()?.ContainerName
+        return this.data['container_barcode']
     }
 
     Date getStartDate() {
-        return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
+        return new Date(this.data['run_start_date']).format("yyyy-MM-dd")
     }
 
     def getYear() {
         def format = new SimpleDateFormat("yyyy-MM-dd")
-        def date = format.parse(this.rows().next()?.'Start Date')
+        def date = format.parse(this.data['run_start_date'])
         return String.valueOf(1900 + date.year)
     }
 
-    Boolean isMgiT7(sun.nio.fs.UnixPath eventfile) {
+    Boolean isMgiT7(sun.nio.fs.UnixPath runinfofile) {
         return this.flowcell() ==~ /^E1\d+$/
     }
 
-    Boolean isMgiG400(sun.nio.fs.UnixPath eventfile) {
+    Boolean isMgiG400(sun.nio.fs.UnixPath runinfofile) {
         return this.flowcell() ==~ /^V3\d+$/
     }
 
-    Boolean isIllumina(sun.nio.fs.UnixPath eventfile) {
+    Boolean isIllumina(sun.nio.fs.UnixPath runinfofile) {
         return !(this.isMgiT7() || this.isMgiG400())
     }
 
@@ -100,7 +108,7 @@ class Eventfile {
 
     String toString() {
         def launched = lastlaunched ? new Date( lastlaunched * 1000 ).format("yyyy-MM-dd'T'HH:mm:ss") : "Unlaunched"
-        return "Eventfile(${this.filename}, ${this.ContainerName()}, Launched ${launched})"
+        return "RunInfofile(${this.filename}, ${this.ContainerName()}, Launched ${launched})"
     }
 
     File toTemporaryFile() {
