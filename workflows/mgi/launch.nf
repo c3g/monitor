@@ -175,9 +175,9 @@ workflow MatchEventfilesWithT7Runs {
     EventfilesForRunning
     | mix(EventfilesForRunningFromFlagfiles)
     | combine(GetGenpipes.out)
+    | BeginRunT7
     | EmailAlertStart
-    // | BeginRunT7
-    // | map { Eventfile evt -> db.markAsLaunched(evt) }
+    | map { Eventfile evt -> db.markAsLaunched(evt) }
 }
 
 
