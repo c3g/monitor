@@ -87,7 +87,7 @@ process BeginRunT7 {
     // def outpath = Paths.get(params.mgi.outdir, )
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
-module use \$MUGQIC_INSTALL_HOME_PRIVAT E/modulefiles
+module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
 mkdir -p ${params.mgi.outdir}/${eventfile.flowcell}
