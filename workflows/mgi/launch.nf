@@ -63,7 +63,7 @@ process GetGenpipes {
         """
     else
         """
-        git clone git@bitbucket.org:mugqic/genpipes.git genpipes
+        git clone https://ehenrion@bitbucket.org/mugqic/genpipes.git genpipes
         cd genpipes
         git checkout $commit
         """
