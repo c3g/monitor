@@ -15,7 +15,15 @@ process EmailAlertFinish {
     !params.nomail
 
     exec:
-    def email_fields = [run: multiqc_json, workflow: workflow]
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc_json.flowcell)
+    def platform = (evt.platform == "illumina") ? "Illumina" : "MGI"
+    def email_fields = [
+        run: multiqc_json,
+        workflow: workflow,
+        platform: platform,
+        year: evt.year
+    ]
 
     TemplateConfiguration config = new TemplateConfiguration()
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
