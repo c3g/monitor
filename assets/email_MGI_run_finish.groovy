@@ -4,6 +4,8 @@
 // When the template is rendered/instantiated, we pass it two objects:
 // - the `run`, which is the MultiQC Groovy object mentioned above
 // - the `workflow`, which is the Nextflow workflow object also mentioned above.
+// - the `platform`, which is a string extracted from the eventfiles and reformated.
+// - the `event`, which is the event file Groovy object of the currentl run
 // The `run` object is used throughout, but `workflow` is only used to pull the commitID in the footer.
 
 
@@ -40,7 +42,7 @@ html(lang:'en') {
             h3 "Run: ${run.run} (${run.flowcell})"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${run.year}/${run.run}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${event.year}/${run.run}.report.html", "on GenAP" )
                 span "."
             }
             ul {
