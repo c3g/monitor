@@ -17,11 +17,9 @@ process EmailAlertFinish {
     exec:
     def db = new MetadataDB(params.db, log)
     def evt = db.latestEventfile(multiqc_json.flowcell)
-    def platform = (evt.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         run: multiqc_json,
         workflow: workflow,
-        platform: platform,
         event: evt
     ]
 
