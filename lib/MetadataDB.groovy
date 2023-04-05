@@ -92,6 +92,7 @@ class MetadataDB {
         ''', [flowcell:flowcell]
         )
         if(rows.size() == 0) {
+            log.debug("Database | not found !")
             return null
         } else {
             def row = rows[0]
