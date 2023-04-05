@@ -4,7 +4,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 import java.nio.file.Path
 import java.nio.file.Files
-
+import java.text.SimpleDateFormat
 import nextflow.processor.TaskPath
 
 class Eventfile {
