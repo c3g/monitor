@@ -60,12 +60,16 @@ class Eventfile {
         return this.rows().next()?.ContainerName
     }
 
-    Date StartDate() {
-        return Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
+    Date getStartDate() {
+        def format = new SimpleDateFormat("yyyy-MM-dd")
+        return format.parse(this.rows().next()?.'Start Date')
+        // return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
     }
 
-    String year() {
-        return this.StartDate.getYear()
+    def getYear() {
+        def format = new SimpleDateFormat("yyyy-MM-dd")
+        def date = format.parse(this.rows().next()?.'Start Date')
+        return String.valueOf(1900 + date.year)
     }
 
     Boolean isMgiT7(sun.nio.fs.UnixPath eventfile) {
