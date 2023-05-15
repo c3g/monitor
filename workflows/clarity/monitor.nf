@@ -22,7 +22,7 @@ process EmailAlertFinish {
         run: multiqc_json,
         workflow: workflow,
         platform: platform,
-        year: evt.year
+        event: evt
     ]
 
     TemplateConfiguration config = new TemplateConfiguration()

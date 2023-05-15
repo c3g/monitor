@@ -67,7 +67,9 @@ class Eventfile {
     }
 
     Date getStartDate() {
-        return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
+        def format = new SimpleDateFormat("yyyy-MM-dd")
+        return format.parse(this.rows().next()?.'Start Date')
+        // return new Date(this.rows().next()?.'Start Date').format("yyyy-MM-dd")
     }
 
     def getYear() {

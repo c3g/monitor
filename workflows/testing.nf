@@ -1,6 +1,8 @@
 import groovy.text.markup.TemplateConfiguration
 import groovy.text.markup.MarkupTemplateEngine
 
+import java.text.SimpleDateFormat
+
 import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process OnStartClarityHTML {
@@ -34,7 +36,7 @@ process OnStartClarityHTML {
 }
 
 process OnStartFreezemanHTML {
-    publishDir "outputs/testing/email", mode: 'copy'
+    publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
 
     input:
@@ -44,6 +46,12 @@ process OnStartFreezemanHTML {
     file('*.html')
 
     exec:
+    // println "YOYO"
+    // println runinfo_json.instrument
+    // println "YOYO"
+    // def dformat = new SimpleDateFormat("yyMMdd")
+    // println dformat.format(runinfo_json.startDate).toString()
+    // println "YOYO"
     def db = new MetadataDB(params.db, log)
     def platform = (runinfo_json.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
@@ -62,7 +70,7 @@ process OnStartFreezemanHTML {
 }
 
 process OnFinishClarityHTML {
-    publishDir "outputs/testing/email", mode: 'copy'
+    publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
 
     input:
@@ -95,7 +103,7 @@ process OnFinishFreezemanHTML {
     executor 'local'
 
     input:
-    tuple val(template), val(runinfo_json)
+    tuple val(template), val(runinfo_json), val(multiqc_json)
 
     output:
     file('*.html')
@@ -104,7 +112,7 @@ process OnFinishFreezemanHTML {
     def db = new MetadataDB(params.db, log)
     def platform = (runinfo_json.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
-        run: runinfo_json,
+        run: multiqc_json,
         workflow: workflow,
         platform: platform,
         event: runinfo_json
@@ -134,7 +142,7 @@ workflow OnFinishDebug {
     | OnFinishClarityHTML
 
     Channel.watchPath("$projectDir/assets/*finish.groovy", 'create,modify')
-    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json", log)] }
+    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json", log), new MultiQC("$projectDir/assets/testing/multiqc_data.example.json")] }
     | OnFinishFreezemanHTML
 }
 

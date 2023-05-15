@@ -10,9 +10,11 @@ import org.slf4j.Logger
 import nextflow.processor.TaskPath
 
 import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
 class RunInfofile {
     Map data
+    String text
     String path
     String filename
     Long lastmodified
@@ -23,6 +25,7 @@ class RunInfofile {
     RunInfofile(String path, Logger log) {
         def file = new File(path)
         this.data = new JsonSlurper().parseText(file.text)
+        this.text = JsonOutput.prettyPrint(JsonOutput.toJson(this.data))
         this.filename = file.getName()
         this.lastmodified = file.lastModified()
         this.flowcell = this.ContainerName()
@@ -31,6 +34,7 @@ class RunInfofile {
 
     RunInfofile(Path path, Logger log) {
         this.data = new JsonSlurper().parseText(path.getText())
+        this.text = JsonOutput.prettyPrint(JsonOutput.toJson(this.data))
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
@@ -39,6 +43,7 @@ class RunInfofile {
 
     RunInfofile(TaskPath path, Logger log) {
         this.data = new JsonSlurper().parseText(path.getText())
+        this.text = JsonOutput.prettyPrint(JsonOutput.toJson(this.data))
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
@@ -47,6 +52,7 @@ class RunInfofile {
 
     RunInfofile(String data, String filename, Long lastlaunched, Logger log) {
         this.data = new JsonSlurper().parseText(data)
+        this.text = JsonOutput.prettyPrint(JsonOutput.toJson(this.data))
         this.filename = filename
         this.lastlaunched = lastlaunched
         this.flowcell = this.ContainerName()
@@ -75,7 +81,8 @@ class RunInfofile {
     }
 
     Date getStartDate() {
-        return new Date(this.data['run_start_date']).format("yyyy-MM-dd")
+        def format = new SimpleDateFormat("yyyy-MM-dd")
+        return format.parse(this.data['run_start_date'])
     }
 
     def getYear() {
@@ -104,6 +111,10 @@ class RunInfofile {
         } else if (this.isIllumina()) {
             return "illumina"
         }
+    }
+
+    String getInstrument() {
+        return this.data['instrument_serial_number']
     }
 
     String toString() {

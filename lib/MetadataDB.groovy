@@ -20,8 +20,27 @@ class MetadataDB {
     def setup() {
         log.debug("Setting up database")
         db.execute("""
+            CREATE TABLE IF NOT EXISTS successfiles (
+                flowcell TEXT NOT NULL UNIQUE,
+                path TEXT NOT NULL,
+                lastmodified INTEGER NOT NULL
+            )
+            """.stripIndent()
+        )
+
+        db.execute("""
             CREATE TABLE IF NOT EXISTS flagfiles (
                 flowcell TEXT NOT NULL UNIQUE,
+                path TEXT NOT NULL,
+                lastmodified INTEGER NOT NULL
+            )
+            """.stripIndent()
+        )
+
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS rtacompletefiles (
+                flowcell TEXT NOT NULL UNIQUE,
+                seqtype TEXT NOT NULL,
                 path TEXT NOT NULL,
                 lastmodified INTEGER NOT NULL
             )
@@ -51,6 +70,22 @@ class MetadataDB {
         )
     }
 
+    def insert(MgiSuccessfile sf) {
+        log.debug("Database | Inserting new success (${sf.flowcell}) into database")
+        db.execute(
+            """
+            INSERT INTO successfiles (flowcell, path, lastmodified)
+            VALUES(?,?,?)
+            ON CONFLICT (flowcell) DO
+            UPDATE SET
+                lastmodified=excluded.lastmodified,
+                path=excluded.path
+            """.stripIndent(),
+            [sf.flowcell, sf.path, sf.lastmodified]
+        )
+        return sf
+    }
+
     def insert(MgiFlagfile ff) {
         log.debug("Database | Inserting new flagfile (${ff.flowcell}) into database")
         db.execute(
@@ -65,6 +100,23 @@ class MetadataDB {
             [ff.flowcell, ff.path, ff.lastmodified]
         )
         return ff
+    }
+
+    def insert(IlluminaRTACompletefile rf) {
+        log.debug("Database | Inserting new RTAcomplete (${rf.flowcell}, for ${rf.seqtype} run, found here ${rf.path}) into database")
+        db.execute(
+            """
+            INSERT INTO rtacompletefiles (flowcell, seqtype, path, lastmodified)
+            VALUES(?,?,?,?)
+            ON CONFLICT (flowcell) DO
+            UPDATE SET
+                seqtype=excluded.seqtype,
+                lastmodified=excluded.lastmodified,
+                path=excluded.path
+            """.stripIndent(),
+            [rf.flowcell, rf.seqtype, rf.path, rf.lastmodified]
+        )
+        return rf
     }
 
     def insert(Eventfile evt) {
@@ -94,7 +146,7 @@ class MetadataDB {
                 lastmodified=excluded.lastmodified,
                 filename=excluded.filename
             """.stripIndent(),
-            [runinf.filename, runinf.flowcell, runinf.lastmodified, runinf.data.toString()]
+            [runinf.filename, runinf.flowcell, runinf.lastmodified, runinf.text]
         )
         return runinf
     }
@@ -157,6 +209,18 @@ class MetadataDB {
         }
     }
 
+    Boolean hasSuccessfile(Eventfile evt) {
+        def flowcell = evt.flowcell
+        def rows = db.rows('SELECT * FROM successfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        rows.size() >= 0
+    }
+
+    Boolean hasSuccessfile(RunInfofile runinf) {
+        def flowcell = runinf.flowcell
+        def rows = db.rows('SELECT * FROM successfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        rows.size() >= 0
+    }
+
     Boolean hasFlagfile(Eventfile evt) {
         def flowcell = evt.flowcell
         def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
@@ -167,6 +231,44 @@ class MetadataDB {
         def flowcell = runinf.flowcell
         def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
+    }
+
+    Boolean hasRTAcompletefile(Eventfile evt) {
+        def flowcell = evt.flowcell
+        def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        rows.size() >= 0
+    }
+
+    Boolean hasRTAcompletefile(RunInfofile runinf) {
+        def flowcell = runinf.flowcell
+        def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        rows.size() >= 0
+    }
+
+    String seqType(Eventfile evt) {
+        def flowcell = evt.flowcell
+        def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        if (rows.size() == 0) {
+            log.debug("Database | no rtacompletefiles found for flowcell '${flowcell}' !")
+            return null
+        } else {
+            def row = rows[0]
+            log.debug("Database | found rtacompletefiles for flowcell '${flowcell} !")
+            return row.seqtype
+        }
+    }
+
+    String seqType(RunInfofile runinf) {
+        def flowcell = runinf.flowcell
+        def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
+        if (rows.size() == 0) {
+            log.debug("Database | no rtacompletefiles found for flowcell '${flowcell} !")
+            return null
+        } else {
+            def row = rows[0]
+            log.debug("Database | found rtacompletefiles for flowcell '${flowcell} !")
+            return row.seqtype
+        }
     }
 
     def markAsLaunched(Eventfile evt) {
