@@ -130,7 +130,6 @@ EOF
     -l debug \\
     -d $rundir \\
     $flag \\
-    --no-json \\
     $splitbarcodeDemux \\
     --type ${runinfofile.platform} \\
     -r ${runinfofile.filename} \\
