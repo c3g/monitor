@@ -8,6 +8,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 process OnStartClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     tuple val(template), val(multiqc_json)
@@ -38,6 +39,7 @@ process OnStartClarityHTML {
 process OnStartFreezemanHTML {
     publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     tuple val(template), val(runinfo_json)
@@ -72,6 +74,7 @@ process OnStartFreezemanHTML {
 process OnFinishClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     tuple val(template), val(multiqc_json)
@@ -101,6 +104,7 @@ process OnFinishClarityHTML {
 process OnFinishFreezemanHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     tuple val(template), val(runinfo_json), val(multiqc_json)
