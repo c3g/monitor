@@ -29,53 +29,34 @@ html(lang:'en') {
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
-            h2 "New run processing started"
-            h3 {
-                "Flowcell:"
-                span(style:'font-weight: bold', flowcell)
-            }
+            h2 "New run processing started : ${flowcell}"
             p {
                 span "This is an automated message sent from the run processing event monitor."
             }
             p {
-                span "Run processing has started for MGI G400 run: 230424_R2130400190016_10175_BV350132313_10175MG01B-dnbseqg400. "
+                span "Run processing has started for new ${platform} run on flowcell: ${flowcell}. "
             }
             p {
-                span "Event file used is attached."
+                span "Freezeman Run Info file used is attached."
             }
-            // table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
-            //     tbody {
-            //         tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {
-            //             th(style:'padding: 5px 10px', "Project Name")
-            //             th(style:'padding: 5px 10px', "Samples")
-            //         }
-            //         samples.countBy{it.ProjectName}.each { projectname, count ->
-            //             tr(style:'border: 2px solid #dddddd;') {
-            //                 td style:"padding: 5px 10px; font-weight: bold", projectname
-            //                 td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
-            //             }
-            //         }
-            //         tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
-            //             td "Total"
-            //             td  samples.size() == 1 ? "${samples.size()} sample" : "${samples.size()} samples"
-            //         }
-            //         // run
-            //         // .generalStats
-            //         // .sort { it.key }
-            //         // .each {
-            //         //     def name = it.key
-            //         //     def vals = it.value
-            //         //     tr(style:'border: 2px solid #dddddd;') {
-            //         //         td style:"padding: 5px 10px; font-weight: bold", name
-            //         //         td style:"padding: 5px 10px;", vals['Project']
-            //         //         td style:"padding: 5px 10px;", nfGeneral.format(vals['clusters'])
-            //         //         td style:"padding: 5px 10px;", nfGeneral.format(vals['yield'])
-            //         //         td style:"padding: 5px 10px;", nfPercent.format(vals['gc'])
-            //         //         td style:"padding: 5px 10px;", nfPercent.format(vals['q30_rate'])
-            //         //     }
-            //         // }
-            //     }
-            // }
+            table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
+                tbody {
+                    tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {
+                        th(style:'padding: 5px 10px', "Project Name")
+                        th(style:'padding: 5px 10px', "Samples")
+                    }
+                    samples.countBy{it.ProjectName ? it.ProjectName : it.project_name}.each { projectname, count ->
+                        tr(style:'border: 2px solid #dddddd;') {
+                            td style:"padding: 5px 10px; font-weight: bold", projectname
+                            td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
+                        }
+                    }
+                    tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
+                        td "Total"
+                        td  samples.size() == 1 ? "${samples.size()} sample" : "${samples.size()} samples"
+                    }
+                }
+            }
             p(style:"color: #999999; font-size: 12px") {
                 span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }

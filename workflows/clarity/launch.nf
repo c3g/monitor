@@ -25,7 +25,7 @@ process EmailAlertStart {
     def platform = (eventfile.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         flowcell: eventfile.flowcell,
-        eventfile_rows: rows,
+        samples: rows,
         platform: platform,
         workflow: workflow
     ]

@@ -31,7 +31,7 @@ process OnStartClarityHTML {
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
     File templateFile = new File(template.toString())
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/email_run_start.html")
+    File finalHtml = new File("${task.workDir}/event_email_run_start.html")
     finalHtml.text = output.toString()
 }
 
@@ -46,12 +46,6 @@ process OnStartFreezemanHTML {
     file('*.html')
 
     exec:
-    // println "YOYO"
-    // println runinfo_json.instrument
-    // println "YOYO"
-    // def dformat = new SimpleDateFormat("yyMMdd")
-    // println dformat.format(runinfo_json.startDate).toString()
-    // println "YOYO"
     def db = new MetadataDB(params.db, log)
     def platform = (runinfo_json.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
@@ -65,7 +59,7 @@ process OnStartFreezemanHTML {
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
     File templateFile = new File(template.toString())
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/email_run_start.html")
+    File finalHtml = new File("${task.workDir}/runinfo_email_run_start.html")
     finalHtml.text = output.toString()
 }
 
@@ -94,7 +88,7 @@ process OnFinishClarityHTML {
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
     File templateFile = new File(template.toString())
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/email_run_finish.html")
+    File finalHtml = new File("${task.workDir}/event_email_run_finish.html")
     finalHtml.text = output.toString()
 }
 
@@ -122,7 +116,7 @@ process OnFinishFreezemanHTML {
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
     File templateFile = new File(template.toString())
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/email_run_finish.html")
+    File finalHtml = new File("${task.workDir}/runinfo_email_run_finish.html")
     finalHtml.text = output.toString()
 }
 

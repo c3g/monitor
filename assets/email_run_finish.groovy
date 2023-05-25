@@ -35,7 +35,7 @@ yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
     head {
         meta('http-equiv':'"Content-Type" content="text/html; charset=utf-8"')
-        title("${platform} Run finished: ${run}")
+        title("${platform} Run finished: ${run.run}")
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
