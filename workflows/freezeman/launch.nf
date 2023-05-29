@@ -106,7 +106,7 @@ process BeginRun {
     } else if (runinfofile.platform == "mgit7") {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${runinfofile.flowcell}"
         splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
-        flag = "--flag /nb/Research/MGISeq/T7/R1100600200054/flag"
+        flag = "--flag ${params.mgi.t7.flags}"
         custom_ini = params?.mgi?.t7?.custom_ini ?: ""
         outdir = params.mgi.outdir
         seqtype = "dnbseqt7"
@@ -232,13 +232,13 @@ workflow MatchRunInfofilesWithT7Runs {
     def db = new MetadataDB(params.db, log)
 
     // Preexisting flag files go directly to the DB.
-    Channel.fromPath(params.mgi.t7.flags)
+    Channel.fromPath("${params.mgi.t7.flags}/*.json")
     .map { new MgiFlagfile(it) }
     .map { db.insert(it) }
 
     // New flag files should be stored and then checked to see if we should begin processing
-    log.info("Watching for new MGI T7 flag files at '${params.mgi.t7.flags}'")
-    Channel.watchPath(params.mgi.t7.flags)
+    log.info("Watching for new MGI T7 flag files in '${params.mgi.t7.flags}'")
+    Channel.watchPath("${params.mgi.t7.flags}/*.json")
     .map { new MgiFlagfile(it) }
     .map { ff ->
         db.insert(ff)
