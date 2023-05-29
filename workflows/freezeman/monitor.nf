@@ -81,6 +81,20 @@ process GenapUpload {
     """
 }
 
+process FreezemanIngest {
+    tag { reportfile.getBaseName() }
+    module 'mugqic/pyhton/3.10.4'
+    executor 'local'
+    maxForks 1
+
+    input:
+    path reportfile
+
+    """
+    python freezemanIngestor.py $reportfile
+    """
+}
+
 process SummaryReportUpload {
     tag { report.name - "_L01.summaryReport.html" }
     executor 'local'
@@ -129,9 +143,18 @@ workflow WatchCheckpoints {
 
 workflow WatchFinish {
     log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
-    Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done", 'create,modify')
+    donefiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done", 'create,modify')
+
+    // Upload to GenAP + Send end-of-processing email notification
+    donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | (GenapUpload & EmailAlertFinish)
+
+    // // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
+    // donefiles
+    // | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
+    // | splitText()
+    // | FreezemanIngest
 }
