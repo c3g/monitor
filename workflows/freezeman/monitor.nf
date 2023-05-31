@@ -7,6 +7,7 @@ import groovy.text.markup.MarkupTemplateEngine
 
 process EmailAlertFinish {
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     tuple val(multiqc_html), val(multiqc_json)
@@ -44,6 +45,7 @@ process RunMultiQC {
     tag { donefile.getBaseName() }
     module 'mugqic_dev/MultiQC_C3G/1.12_beta'
     executor 'local'
+    errorStrategy 'terminating'
     maxForks 1
 
     input:

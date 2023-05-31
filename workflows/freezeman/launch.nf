@@ -10,6 +10,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
+    errorStrategy 'terminating'
 
     input:
     val runinfofile
@@ -55,6 +56,8 @@ process EmailAlertStart {
 }
 
 process GetGenpipes {
+    executor 'local'
+    errorStrategy 'terminating'
     input:
     val(commit)
 
@@ -76,6 +79,7 @@ process GetGenpipes {
 
 process BeginRun {
     executor 'local'
+    errorStrategy 'terminating'
     module 'mugqic/python/3.10.4'
 
     input:
