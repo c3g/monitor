@@ -91,7 +91,12 @@ process FreezemanIngest {
     path reportfile
 
     """
-    python freezemanIngestor.py $reportfile
+    python freezemanIngestor.py \\
+        -url http://f5kvm-biobank-qc.genome.mcgill.ca/api/ \\
+        -user ehenrion \\
+        -password <??password??> \\
+        -filepath $reportfile
+
     """
 }
 
