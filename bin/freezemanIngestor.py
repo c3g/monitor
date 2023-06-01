@@ -7,6 +7,8 @@ import subprocess
 import os
 import requests
 import json
+import sys
+from getpass import getpass
 
 AUTH_TOKEN_ENDPOINT = "token/"
 DATASETS_ENDPOINT = "datasets/add_run_processing/"
@@ -45,16 +47,26 @@ def execute(fms_base_url, fms_user, fms_password, filepath):
         else:
             print("Failed call to Freezeman API : " + str(response.status_code) + " (" + response.text + ")")
     else:
-        print("Failed to authenticate...")
+        print("Failed to authenticate...", file=sys.stderr)
         print(auth.text)
 
 if __name__ == '__main__':
     # Get parameters from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("--url", default="http://f5kvm-biobank-qc.genome.mcgill.ca/api/", help="Freezeman QC API base url")
+    parser.add_argument("--url",
+                        default="http://f5kvm-biobank-qc.genome.mcgill.ca/api/",
+                        help="Freezeman QC API base url")
     parser.add_argument("-u", "--user", help="Freezeman User")
-    parser.add_argument("-p", "--password", help="Freezeman Password (cautious plain text)")
-    parser.add_argument("-f", "--filepath", help="Run Processing json file path")
+    parser.add_argument("-p", "--password",
+                        metavar = "PWD",
+                        help = "Freezeman Password (Caution plain text, use \
+                        --user alone for secure prompt)")
+    parser.add_argument("filepath",
+                        metavar = "JSON",
+                        help = "Run Processing json file path")
     args = parser.parse_args()
+    # Passwd can be prompted instead of supplied as plain text
+    if args.user != None and args.password == None:
+        args.password = getpass()
 
     execute(args.url, args.user, args.password, args.filepath)
