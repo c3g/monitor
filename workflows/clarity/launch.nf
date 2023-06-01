@@ -98,7 +98,7 @@ process BeginRun {
     def seqtype = ""
 
     if (eventfile.platform == "illumina") {
-        rundir = "\$(ls -dt /nb/Research/*/*${eventfile.flowcell}* | head -n 1)"
+        rundir = "\$(ls -dt /nb/Research/*/*${eventfile.flowcell}* | grep -v 'processing' | head -n 1)"
         outdir = params.illumina.outdir
         def db = new MetadataDB(params.db, log)
         seqtype = db.seqType(eventfile)
