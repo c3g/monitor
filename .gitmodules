@@ -1,3 +1,3 @@
 [submodule "genpipes"]
 	path = genpipes
-	url = git@bitbucket.org:mugqic/genpipes.git
+	url = https://bitbucket.org/mugqic/genpipes.git
