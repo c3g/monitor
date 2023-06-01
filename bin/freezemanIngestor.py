@@ -51,10 +51,10 @@ def execute(fms_base_url, fms_user, fms_password, filepath):
 if __name__ == '__main__':
     # Get parameters from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("-url", default="http://f5kvm-biobank-qc.genome.mcgill.ca/api/", help="Freezeman QC API base url")
-    parser.add_argument("-user", help="Freezeman User")
-    parser.add_argument("-password", help="Freezeman Password")
-    parser.add_argument("-filepath", help="Run Processing json file path")
+    parser.add_argument("--url", default="http://f5kvm-biobank-qc.genome.mcgill.ca/api/", help="Freezeman QC API base url")
+    parser.add_argument("-u", "--user", help="Freezeman User")
+    parser.add_argument("-p", "--password", help="Freezeman Password (cautious plain text)")
+    parser.add_argument("-f", "--filepath", help="Run Processing json file path")
     args = parser.parse_args()
 
     execute(args.url, args.user, args.password, args.filepath)
