@@ -90,6 +90,7 @@ process BeginRun {
     script:
     def genpipes = "\$(realpath genpipes)"
     def rundate = new SimpleDateFormat("yyMMdd").format(eventfile.startDate).toString()
+    def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
     def outdir = ""
     def splitbarcodeDemux = ""
@@ -110,7 +111,6 @@ process BeginRun {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${eventfile.flowcell}"
         splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
-        custom_ini = params?.mgi?.t7?.custom_ini ?: ""
         outdir = params.mgi.outdir
         seqtype = "dnbseqt7"
     }
