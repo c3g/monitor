@@ -1,5 +1,8 @@
 @Grab('com.xlson.groovycsv:groovycsv:1.3')
 
+import groovy.text.markup.TemplateConfiguration
+import groovy.text.markup.MarkupTemplateEngine
+
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.Files
@@ -10,31 +13,38 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
-    val runinfofile
+    val(runinfofile)
 
     output:
-    val runinfofile
+    file('*.html')
 
     when:
     !params.nomail
 
     exec:
     // println runinfofile
-    def samples = runinfofile.data.samples
     def platform = (runinfofile.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         flowcell: runinfofile.flowcell,
-        samples: samples,
+        samples: runinfofile.data.samples,
         platform: platform,
         workflow: workflow
     ]
 
-    def engine = new groovy.text.GStringTemplateEngine()
-    def html = new File("$projectDir/assets/email_run_start.groovy")
-    def html_template = engine.createTemplate(html).make(email_fields)
+    TemplateConfiguration config = new TemplateConfiguration()
+    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
+    // File templateFile = new File(template.toString())
+    File templateFile = new File("$projectDir/assets/email_run_start.groovy")
+    Writable output = engine.createTemplate(templateFile).make(email_fields)
+    File finalHtml = new File("${task.workDir}/event_email_run_start.html")
+    finalHtml.text = output.toString()
+
+    // def engine = new groovy.text.GStringTemplateEngine()
+    // def html = new File("$projectDir/assets/email_run_start.groovy")
+    // def html_template = engine.createTemplate(html).make(email_fields)
 
     Path tmpdir = Files.createTempDirectory("runprocessing");
     def tmpfile = new File(tmpdir.toFile(), runinfofile.filename)
@@ -48,7 +58,8 @@ process EmailAlertStart {
         attach "$tmpfile"
         subject "Run processing starting - ${runinfofile.flowcell}"
 
-        html_template.toString()
+        // html_template.toString()
+        finalHtml.text
     }
 
     tmpfile.delete()
@@ -57,7 +68,7 @@ process EmailAlertStart {
 
 process GetGenpipes {
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
     input:
     val(commit)
 
@@ -79,14 +90,14 @@ process GetGenpipes {
 
 process BeginRun {
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
     module 'mugqic/python/3.10.4'
 
     input:
     tuple val(runinfofile), path("genpipes")
 
     output:
-    val runinfofile
+    val(runinfofile)
 
     script:
     def genpipes = "\$(realpath genpipes)"
@@ -111,10 +122,11 @@ process BeginRun {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${runinfofile.flowcell}"
         splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
-        custom_ini = params?.mgi?.t7?.custom_ini ?: ""
+        custom_ini = params?.custom_ini ?: ""
         outdir = params.mgi.outdir
         seqtype = "dnbseqt7"
     }
+
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles

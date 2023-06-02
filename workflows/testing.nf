@@ -8,7 +8,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 process OnStartClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
     tuple val(template), val(multiqc_json)
@@ -39,7 +39,7 @@ process OnStartClarityHTML {
 process OnStartFreezemanHTML {
     publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
     tuple val(template), val(runinfo_json)
@@ -68,7 +68,7 @@ process OnStartFreezemanHTML {
 process OnFinishClarityHTML {
     publishDir "outputs/testing/email", mode: 'copy', overwrite: true
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
     tuple val(template), val(multiqc_json)
@@ -98,7 +98,7 @@ process OnFinishClarityHTML {
 process OnFinishFreezemanHTML {
     publishDir "outputs/testing/email", mode: 'copy'
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
     tuple val(template), val(runinfo_json), val(multiqc_json)
@@ -130,7 +130,7 @@ workflow OnStartDebug {
     | OnStartClarityHTML
 
     Channel.watchPath("$projectDir/assets/*start.groovy", 'create,modify')
-    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.json", log)] }
+    | map { [it, new RunInfofile("$projectDir/assets/testing/runinfo/freezeman.runinfo.example.2.json", log)] }
     | OnStartFreezemanHTML
 }
 
