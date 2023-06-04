@@ -70,8 +70,8 @@ class MetadataDB {
         )
     }
 
-    def insert(MgiSuccessfile sf) {
-        log.debug("Database | Inserting new success (${sf.flowcell}) into database")
+    def insert(MgiSuccessfile success) {
+        log.debug("Database | Inserting new MGI Success file (${success.flowcell}, found here ${success.path}) into database")
         db.execute(
             """
             INSERT INTO successfiles (flowcell, path, lastmodified)
@@ -81,13 +81,13 @@ class MetadataDB {
                 lastmodified=excluded.lastmodified,
                 path=excluded.path
             """.stripIndent(),
-            [sf.flowcell, sf.path, sf.lastmodified]
+            [success.flowcell, success.path, success.lastmodified]
         )
-        return sf
+        return success
     }
 
-    def insert(MgiFlagfile ff) {
-        log.debug("Database | Inserting new flagfile (${ff.flowcell}) into database")
+    def insert(MgiFlagfile flag) {
+        log.debug("Database | Inserting new MGI T7 Flag file (${flag.flowcell}, found here ${flag.path}) into database")
         db.execute(
             """
             INSERT INTO flagfiles (flowcell, path, lastmodified)
@@ -97,13 +97,13 @@ class MetadataDB {
                 lastmodified=excluded.lastmodified,
                 path=excluded.path
             """.stripIndent(),
-            [ff.flowcell, ff.path, ff.lastmodified]
+            [flag.flowcell, flag.path, flag.lastmodified]
         )
-        return ff
+        return flag
     }
 
-    def insert(IlluminaRTACompletefile rf) {
-        log.debug("Database | Inserting new RTAcomplete (${rf.flowcell}, for ${rf.seqtype} run, found here ${rf.path}) into database")
+    def insert(IlluminaRTACompletefile rta) {
+        log.debug("Database | Inserting new Illumina RTAcomplete file (${rta.flowcell}, for ${rta.seqtype} run, found here ${rta.path}) into database")
         db.execute(
             """
             INSERT INTO rtacompletefiles (flowcell, seqtype, path, lastmodified)
@@ -114,13 +114,13 @@ class MetadataDB {
                 lastmodified=excluded.lastmodified,
                 path=excluded.path
             """.stripIndent(),
-            [rf.flowcell, rf.seqtype, rf.path, rf.lastmodified]
+            [rta.flowcell, rta.seqtype, rta.path, rta.lastmodified]
         )
-        return rf
+        return rta
     }
 
     def insert(Eventfile evt) {
-        log.debug("Database | Inserting new eventfile (${evt.flowcell}) into database")
+        log.debug("Database | Inserting new Clarity Event file (${evt.flowcell}) into database")
         db.execute(
             """
             INSERT INTO eventfiles (filename, flowcell, lastmodified, data)
@@ -135,8 +135,8 @@ class MetadataDB {
         return evt
     }
 
-    def insert(RunInfofile runinf) {
-        log.debug("Database | Inserting new runinfofiles (${runinf.flowcell}) into database")
+    def insert(RunInfofile runinfo) {
+        log.debug("Database | Inserting new Freezeman Run Info file (${runinfo.flowcell}) into database")
         db.execute(
             """
             INSERT INTO runinfofiles (filename, flowcell, lastmodified, data)
@@ -146,13 +146,13 @@ class MetadataDB {
                 lastmodified=excluded.lastmodified,
                 filename=excluded.filename
             """.stripIndent(),
-            [runinf.filename, runinf.flowcell, runinf.lastmodified, runinf.text]
+            [runinfo.filename, runinfo.flowcell, runinfo.lastmodified, runinfo.text]
         )
-        return runinf
+        return runinfo
     }
 
     Eventfile latestEventfile(String flowcell) {
-        log.debug("Database | Looking for event file for flowcell '$flowcell'")
+        log.debug("Database | Looking for Clarity Event file for flowcell '$flowcell'")
         def rows = db.rows('''
         WITH ranked_messages AS (
             SELECT
@@ -171,17 +171,17 @@ class MetadataDB {
         ''', [flowcell:flowcell]
         )
         if(rows.size() == 0) {
-            log.debug("Database | not found !")
+            log.debug("Database | No Event file found for flowcell '$flowcell'...")
             return null
         } else {
             def row = rows[0]
-            log.debug("Database | found !")
+            log.debug("Database | Event file found  for flowcell '$flowcell' !")
             return new Eventfile(row.data, row.filename, row.lastlaunched, log)
         }
     }
 
     RunInfofile latestRunInfofile(String flowcell) {
-        log.debug("Database | Looking for runinfo file for flowcell '$flowcell'")
+        log.debug("Database | Looking for Freezeman Run Info file for flowcell '$flowcell'")
         def rows = db.rows('''
         WITH ranked_messages AS (
             SELECT
@@ -200,53 +200,53 @@ class MetadataDB {
         ''', [flowcell:flowcell]
         )
         if(rows.size() == 0) {
-            log.debug("Database | not found !")
+            log.debug("Database | No Run Info file found for flowcell '$flowcell'...")
             return null
         } else {
             def row = rows[0]
-            log.debug("Database | found !")
+            log.debug("Database | Run Info file found for flowcell '$flowcell' !")
             return new RunInfofile(row.data, row.filename, row.lastlaunched, log)
         }
     }
 
-    Boolean hasSuccessfile(Eventfile evt) {
-        def flowcell = evt.flowcell
+    Boolean hasSuccessfile(Eventfile event) {
+        def flowcell = event.flowcell
         def rows = db.rows('SELECT * FROM successfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    Boolean hasSuccessfile(RunInfofile runinf) {
-        def flowcell = runinf.flowcell
+    Boolean hasSuccessfile(RunInfofile runinfo) {
+        def flowcell = runinfo.flowcell
         def rows = db.rows('SELECT * FROM successfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    Boolean hasFlagfile(Eventfile evt) {
-        def flowcell = evt.flowcell
+    Boolean hasFlagfile(Eventfile event) {
+        def flowcell = event.flowcell
         def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    Boolean hasFlagfile(RunInfofile runinf) {
-        def flowcell = runinf.flowcell
+    Boolean hasFlagfile(RunInfofile runinfo) {
+        def flowcell = runinfo.flowcell
         def rows = db.rows('SELECT * FROM flagfiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    Boolean hasRTAcompletefile(Eventfile evt) {
-        def flowcell = evt.flowcell
+    Boolean hasRTAcompletefile(Eventfile event) {
+        def flowcell = event.flowcell
         def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    Boolean hasRTAcompletefile(RunInfofile runinf) {
-        def flowcell = runinf.flowcell
+    Boolean hasRTAcompletefile(RunInfofile runinfo) {
+        def flowcell = runinfo.flowcell
         def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         rows.size() >= 0
     }
 
-    String seqType(Eventfile evt) {
-        def flowcell = evt.flowcell
+    String seqType(Eventfile event) {
+        def flowcell = event.flowcell
         def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         if (rows.size() == 0) {
             log.debug("Database | no rtacompletefiles found for flowcell '${flowcell}' !")
@@ -258,8 +258,8 @@ class MetadataDB {
         }
     }
 
-    String seqType(RunInfofile runinf) {
-        def flowcell = runinf.flowcell
+    String seqType(RunInfofile runinfo) {
+        def flowcell = runinfo.flowcell
         def rows = db.rows('SELECT * FROM rtacompletefiles WHERE flowcell = :flowcell', [flowcell:flowcell])
         if (rows.size() == 0) {
             log.debug("Database | no rtacompletefiles found for flowcell '${flowcell} !")
@@ -271,9 +271,9 @@ class MetadataDB {
         }
     }
 
-    def markAsLaunched(Eventfile evt) {
-        log.debug("Database | Marking eventfile as launched '${evt.flowcell}'")
-        def text = evt.text
+    def markAsLaunched(Eventfile event) {
+        log.debug("Database | Marking Clarity Event file as launched '${event.flowcell}'")
+        def text = event.text
         def rows = db.rows('SELECT * FROM eventfiles WHERE data = :data', [data: text])
         if(rows.size() == 0) {
             log.warn("Could not find rows to update lastlaunched date")
@@ -282,9 +282,9 @@ class MetadataDB {
         }
     }
 
-    def markAsLaunched(RunInfofile runinf) {
-        log.debug("Database | Marking runinfofile as launched '${runinf.flowcell}'")
-        def text = runinf.text
+    def markAsLaunched(RunInfofile runinfo) {
+        log.debug("Database | Marking Freezeman Run Info file as launched '${runinfo.flowcell}'")
+        def text = runinfo.text
         def rows = db.rows('SELECT * FROM runinfofiles WHERE data = :data', [data: text])
         if(rows.size() == 0) {
             log.warn("Could not find rows to update lastlaunched date")

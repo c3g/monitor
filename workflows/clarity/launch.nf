@@ -13,10 +13,10 @@ process EmailAlertStart {
     errorStrategy 'terminate'
 
     input:
-    val eventfile
+    val(eventfile)
 
     output:
-    val eventfile
+    val(eventfile)
 
     when:
     !params.nomail
@@ -31,9 +31,10 @@ process EmailAlertStart {
         workflow: workflow
     ]
 
-    def engine = new groovy.text.GStringTemplateEngine()
-    def html = new File("$projectDir/assets/email_run_start.html")
-    def html_template = engine.createTemplate(html).make(email_fields)
+    TemplateConfiguration config = new TemplateConfiguration()
+    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
+    File templateFile = new File("$projectDir/assets/email_run_start.groovy")
+    Writable output = engine.createTemplate(templateFile).make(email_fields)
 
     Path tmpdir = Files.createTempDirectory("runprocessing");
     def tmpfile = new File(tmpdir.toFile(), eventfile.filename)
@@ -47,7 +48,7 @@ process EmailAlertStart {
         attach "$tmpfile"
         subject "Run processing starting - ${eventfile.flowcell}"
 
-        html_template.toString()
+        output.toString()
     }
 
     tmpfile.delete()
@@ -95,7 +96,6 @@ process BeginRun {
     def outdir = ""
     def splitbarcodeDemux = ""
     def flag = ""
-    def custom_ini = ""
     def seqtype = ""
 
     if (eventfile.platform == "illumina") {
@@ -119,7 +119,7 @@ export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
-mkdir -p ${outdir}/${eventfile.flowcell}
+mkdir -p ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype}
 
 cat <<EOF > ${eventfile.filename}
 ${eventfile.text}
@@ -128,7 +128,7 @@ EOF
 \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.py \\
     -c \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.base.ini ${custom_ini} \\
     --genpipes_file genpipes_submitter.sh \\
-    -o ${outdir}/${rundate}_${eventfile.flowcell} \\
+    -o ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype} \\
     -j pbs \\
     -l debug \\
     -d $rundir \\
@@ -137,11 +137,13 @@ EOF
     $splitbarcodeDemux \\
     --type ${eventfile.platform} \\
     -r ${eventfile.filename} \\
-    --force_mem_per_cpu 5G
+    --force_mem_per_cpu 5G 2> genpipes_submitter.out
 
 bash genpipes_submitter.sh
 
-cp ${eventfile.filename} ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype}
+cp ${eventfile.filename} ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype}/
+cp genpipes_submitter.sh ${outdir}/${rundate}_${eventfile.flowcell}_${seqtype}/
+cp genpipes_submitter.out ${outdir}/${rundate}_${eventfile.flowcell}_${seqtype}/
     """
 }
 

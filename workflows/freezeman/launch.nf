@@ -19,7 +19,7 @@ process EmailAlertStart {
     val(runinfofile)
 
     output:
-    file('*.html')
+    val(runinfofile)
 
     when:
     !params.nomail
@@ -36,15 +36,8 @@ process EmailAlertStart {
 
     TemplateConfiguration config = new TemplateConfiguration()
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
-    // File templateFile = new File(template.toString())
     File templateFile = new File("$projectDir/assets/email_run_start.groovy")
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/event_email_run_start.html")
-    finalHtml.text = output.toString()
-
-    // def engine = new groovy.text.GStringTemplateEngine()
-    // def html = new File("$projectDir/assets/email_run_start.groovy")
-    // def html_template = engine.createTemplate(html).make(email_fields)
 
     Path tmpdir = Files.createTempDirectory("runprocessing");
     def tmpfile = new File(tmpdir.toFile(), runinfofile.filename)
@@ -58,8 +51,7 @@ process EmailAlertStart {
         attach "$tmpfile"
         subject "Run processing starting - ${runinfofile.flowcell}"
 
-        // html_template.toString()
-        finalHtml.text
+        output.toString()
     }
 
     tmpfile.delete()
@@ -131,7 +123,7 @@ export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
-mkdir -p ${outdir}/${runinfofile.flowcell}
+mkdir -p ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}
 
 cat <<EOF > ${runinfofile.filename}
 ${runinfofile.text}
@@ -140,7 +132,7 @@ EOF
 \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.py \\
     -c \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.base.ini ${custom_ini} \\
     --genpipes_file genpipes_submitter.sh \\
-    -o ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell} \\
+    -o ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype} \\
     -j pbs \\
     -l debug \\
     -d $rundir \\
@@ -148,11 +140,13 @@ EOF
     $splitbarcodeDemux \\
     --type ${runinfofile.platform} \\
     -r ${runinfofile.filename} \\
-    --force_mem_per_cpu 5G
+    --force_mem_per_cpu 5G 2> genpipes_submitter.out
 
-bash genpipes_submitter.sh
+bash genpipes_submitter.sh 
 
-cp ${runinfofile.filename} ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}
+cp ${runinfofile.filename} ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
+cp genpipes_submitter.sh ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
+cp genpipes_submitter.out ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
     """
 }
 
