@@ -55,41 +55,19 @@ process EmailAlertStart {
     tmpdir.delete()
 }
 
-process GetGenpipes {
-    executor 'local'
-    errorStrategy 'terminating'
-    input:
-    val(commit)
-
-    output:
-    path("genpipes")
-
-    script:
-    if (params.genpipes)
-        """
-        ln -s ${params.genpipes} genpipes
-        """
-    else
-        """
-        git clone git@bitbucket.org:mugqic/genpipes.git genpipes
-        cd genpipes
-        git checkout $commit
-        """
-}
-
 process BeginRun {
     executor 'local'
     errorStrategy 'terminating'
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val(runinfofile), path("genpipes")
+    tuple val(runinfofile), path(params.genpipes)
 
     output:
     val runinfofile
 
     script:
-    def genpipes = "\$(realpath genpipes)"
+    def genpipes = "\$(realpath params.genpipes)"
     def rundate = new SimpleDateFormat("yyMMdd").format(runinfofile.startDate).toString()
     def rundir = ""
     def outdir = ""
@@ -218,11 +196,8 @@ workflow MatchRunInfofilesWithG400Runs {
     .map { RunInfofile rinfo -> db.hasSuccessfile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching *_Success.txt file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromSuccessfiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
@@ -262,11 +237,8 @@ workflow MatchRunInfofilesWithT7Runs {
     .map { RunInfofile rinfo -> db.hasFlagfile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching flag file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromFlagfiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
@@ -400,11 +372,9 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     .map { RunInfofile rinfo -> db.hasRTAcompletefile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching RTAComplete file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
 
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromRTACompletefiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
