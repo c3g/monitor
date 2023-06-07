@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # Get parameters from command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--url",
-                        default="http://f5kvm-biobank-qc.genome.mcgill.ca/api/",
+                        default="https://f5kvm-biobank-qc.genome.mcgill.ca/api/",
                         help="Freezeman QC API base url")
     parser.add_argument("-u", "--user", help="Freezeman User")
     parser.add_argument("-p", "--password",
