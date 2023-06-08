@@ -89,7 +89,7 @@ process BeginRun {
     tuple val(eventfile), path("genpipes")
 
     output:
-    val eventfile
+    val(eventfile)
 
     script:
     def genpipes = "\$(realpath genpipes)"

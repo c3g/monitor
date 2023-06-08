@@ -30,8 +30,6 @@ process EmailAlertFinish {
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
     File templateFile = new File("$projectDir/assets/email_run_finish.groovy")
     Writable output = engine.createTemplate(templateFile).make(email_fields)
-    File finalHtml = new File("${task.workDir}/runinfo_email_run_finish.html")
-    finalHtml.text = output.toString()
 
     sendMail {
         to params.email.onfinish
@@ -39,7 +37,7 @@ process EmailAlertFinish {
         attach "$multiqc_html"
         subject "Run processing complete - ${multiqc_json.seqtype} - ${multiqc_json.flowcell}"
 
-        finalHtml.text
+        output.toString()
     }
 }
 

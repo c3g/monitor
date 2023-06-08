@@ -112,7 +112,7 @@ process BeginRun {
         seqtype = "dnbseqg400"
     } else if (runinfofile.platform == "mgit7") {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${runinfofile.flowcell}"
-        splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
+        // splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
         outdir = params.mgi.outdir
         seqtype = "dnbseqt7"
