@@ -1,5 +1,8 @@
 @Grab('com.xlson.groovycsv:groovycsv:1.3')
 
+import groovy.text.markup.TemplateConfiguration
+import groovy.text.markup.MarkupTemplateEngine
+
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.Files
@@ -10,31 +13,31 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
 
     input:
-    val runinfofile
+    val(runinfofile)
 
     output:
-    val runinfofile
+    val(runinfofile)
 
     when:
     !params.nomail
 
     exec:
     // println runinfofile
-    def samples = runinfofile.data.samples
     def platform = (runinfofile.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         flowcell: runinfofile.flowcell,
-        samples: samples,
+        samples: runinfofile.data.samples,
         platform: platform,
         workflow: workflow
     ]
 
-    def engine = new groovy.text.GStringTemplateEngine()
-    def html = new File("$projectDir/assets/email_run_start.groovy")
-    def html_template = engine.createTemplate(html).make(email_fields)
+    TemplateConfiguration config = new TemplateConfiguration()
+    MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
+    File templateFile = new File("$projectDir/assets/email_run_start.groovy")
+    Writable output = engine.createTemplate(templateFile).make(email_fields)
 
     Path tmpdir = Files.createTempDirectory("runprocessing");
     def tmpfile = new File(tmpdir.toFile(), runinfofile.filename)
@@ -48,32 +51,54 @@ process EmailAlertStart {
         attach "$tmpfile"
         subject "Run processing starting - ${runinfofile.flowcell}"
 
-        html_template.toString()
+        output.toString()
     }
 
     tmpfile.delete()
     tmpdir.delete()
 }
 
+process GetGenpipes {
+    executor 'local'
+    errorStrategy 'terminate'
+    input:
+    val(commit)
+
+    output:
+    path("genpipes")
+
+    script:
+    if (params.genpipes)
+        """
+        ln -s ${params.genpipes} genpipes
+        """
+    else
+        """
+        git clone git@bitbucket.org:mugqic/genpipes.git genpipes
+        cd genpipes
+        git checkout $commit
+        """
+}
+
 process BeginRun {
     executor 'local'
-    errorStrategy 'terminating'
+    errorStrategy 'terminate'
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val(runinfofile), path(params.genpipes)
+    val(runinfofile)
 
     output:
-    val runinfofile
+    val(runinfofile)
 
     script:
     def genpipes = "\$(realpath params.genpipes)"
     def rundate = new SimpleDateFormat("yyMMdd").format(runinfofile.startDate).toString()
+    def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
     def outdir = ""
     def splitbarcodeDemux = ""
     def flag = ""
-    def custom_ini = ""
     def seqtype = ""
     
     if (runinfofile.platform == "illumina") {
@@ -87,18 +112,18 @@ process BeginRun {
         seqtype = "dnbseqg400"
     } else if (runinfofile.platform == "mgit7") {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${runinfofile.flowcell}"
-        splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
+        // splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
-        custom_ini = params?.mgi?.t7?.custom_ini ?: ""
         outdir = params.mgi.outdir
         seqtype = "dnbseqt7"
     }
+
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
-mkdir -p ${outdir}/${runinfofile.flowcell}
+mkdir -p ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}
 
 cat <<EOF > ${runinfofile.filename}
 ${runinfofile.text}
@@ -107,7 +132,7 @@ EOF
 \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.py \\
     -c \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.base.ini ${custom_ini} \\
     --genpipes_file genpipes_submitter.sh \\
-    -o ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell} \\
+    -o ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype} \\
     -j pbs \\
     -l debug \\
     -d $rundir \\
@@ -115,11 +140,13 @@ EOF
     $splitbarcodeDemux \\
     --type ${runinfofile.platform} \\
     -r ${runinfofile.filename} \\
-    --force_mem_per_cpu 5G
+    --force_mem_per_cpu 5G 2> genpipes_submitter.out
 
-bash genpipes_submitter.sh
+bash genpipes_submitter.sh 
 
-cp ${runinfofile.filename} ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}
+cp ${runinfofile.filename} ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
+cp genpipes_submitter.sh ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
+cp genpipes_submitter.out ${outdir}/${rundate}_${runinfofile.instrument}_${runinfofile.flowcell}-${seqtype}/
     """
 }
 

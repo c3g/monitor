@@ -1,3 +1,4 @@
 [submodule "genpipes"]
 	path = genpipes
 	url = https://bitbucket.org/mugqic/genpipes.git
+	branch = run_processing

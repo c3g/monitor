@@ -45,7 +45,7 @@ html(lang:'en') {
                         th(style:'padding: 5px 10px', "Project Name")
                         th(style:'padding: 5px 10px', "Samples")
                     }
-                    samples.countBy{it.ProjectName ? it.ProjectName : it.project_name}.each { projectname, count ->
+                    samples.countBy{it.ProjectName ? it.ProjectName : it.project_name}.each { projectname, count -> 
                         tr(style:'border: 2px solid #dddddd;') {
                             td style:"padding: 5px 10px; font-weight: bold", projectname
                             td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
