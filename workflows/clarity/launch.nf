@@ -96,33 +96,36 @@ process BeginRun {
     def rundate = new SimpleDateFormat("yyMMdd").format(eventfile.startDate).toString()
     def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
-    def outdir = ""
+    def outdir_root = ""
     def splitbarcodeDemux = ""
     def flag = ""
     def seqtype = ""
 
     if (eventfile.platform == "illumina") {
         rundir = "\$(ls -dt /nb/Research/*/*${eventfile.flowcell}* | grep -v 'processing' | head -n 1)"
-        outdir = params.illumina.outdir
+        outdir_root = params.illumina.outdir
         def db = new MetadataDB(params.db, log)
         seqtype = db.seqType(eventfile)
     } else if (eventfile.platform == "mgig400") {
         rundir = "\$(ls -dt /nb/Research/MGISeq/seq[12]/R213040019001[68]/*${eventfile.flowcell}* | head -n 1)"
-        outdir = params.mgi.outdir
+        outdir_root = params.mgi.outdir
         seqtype = "dnbseqg400"
     } else if (eventfile.platform == "mgit7") {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${eventfile.flowcell}"
         splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
-        outdir = params.mgi.outdir
+        outdir_root = params.mgi.outdir
         seqtype = "dnbseqt7"
     }
+    def run_name = "\$(basename ${rundir})"
+    def outdir = "${outdir_root}/${run_name}-${seqtype}"
+
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
 module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
 export MUGQIC_PIPELINES_HOME=${genpipes}
 
-mkdir -p ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype}
+mkdir -p ${outdir}
 
 cat <<EOF > ${eventfile.filename}
 ${eventfile.text}
@@ -131,12 +134,11 @@ EOF
 \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.py \\
     -c \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.base.ini ${custom_ini} \\
     --genpipes_file genpipes_submitter.sh \\
-    -o ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype} \\
+    -o ${outdir} \\
     -j pbs \\
     -l debug \\
     -d $rundir \\
     $flag \\
-    --no-json \\
     $splitbarcodeDemux \\
     --type ${eventfile.platform} \\
     -r ${eventfile.filename} \\
@@ -144,9 +146,9 @@ EOF
 
 bash genpipes_submitter.sh
 
-cp ${eventfile.filename} ${outdir}/${rundate}_${eventfile.flowcell}-${seqtype}/
-cp genpipes_submitter.sh ${outdir}/${rundate}_${eventfile.flowcell}_${seqtype}/
-cp genpipes_submitter.out ${outdir}/${rundate}_${eventfile.flowcell}_${seqtype}/
+cp ${eventfile.filename} ${outdir}/
+cp genpipes_submitter.sh ${outdir}/
+cp genpipes_submitter.out ${outdir}/
     """
 }
 
