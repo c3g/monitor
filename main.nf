@@ -46,6 +46,7 @@ workflow ClarityMonitorAndLaunch {
 workflow FreezemanMonitorAndLaunch {
     FreezemanMonitor()
     FLaunch()
+    log.debug("CHECKING: FreezemanMonitorAndLaunch Completed")
 }
 
 workflow MonitorAndLaunch {

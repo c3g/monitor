@@ -55,8 +55,15 @@ nexflow clean
 Notes
 -----
 
+The Launch part of the monitor is particularly slow to be ready to receive
+NovaSeq runs runinfofile. Even with the fzmn-child-process child config file
+that reduce the glob pattern to check for `RTAComplete.txt` files, the Launch
+for NovaSeq takes at least 25mins.
+
 Not only is the repo relying on Abacus' system and filesystem, the trigger that
 launches the run processing relies on files dropped in the
 `freezeman-lims-run-info` folder. In the current case, that is performed by a
 5min cron job under freezeman-[lims,qc,dev] users that drops them in a folder
 under freezeman-[lims,qc,dev] access.
+
+
