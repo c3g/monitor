@@ -86,13 +86,13 @@ process BeginRun {
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val(eventfile), path("genpipes")
+    tuple val(eventfile), path(params.genpipes)
 
     output:
     val(eventfile)
 
     script:
-    def genpipes = "\$(realpath genpipes)"
+    def genpipes = "\$(realpath params.genpipes)"
     def rundate = new SimpleDateFormat("yyMMdd").format(eventfile.startDate).toString()
     def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
@@ -221,11 +221,9 @@ workflow MatchEventfilesWithG400Runs {
     .map { Eventfile evt -> db.hasSuccessfile(evt) ? evt : log.debug("New event file (${evt.flowcell}) | No matching success file") }
     .set { EventfilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
 
     EventfilesForRunning
     | mix(EventfilesForRunningFromSuccessfiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
@@ -265,11 +263,8 @@ workflow MatchEventfilesWithT7Runs {
     .map { Eventfile evt -> db.hasFlagfile(evt) ? evt : log.debug("New event file (${evt.flowcell}) | No matching flag file") }
     .set { EventfilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
     EventfilesForRunning
     | mix(EventfilesForRunningFromFlagfiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
@@ -402,11 +397,8 @@ workflow MatchEventfilesWithIlluminaRuns {
     .map { Eventfile evt -> db.hasRTAcompletefile(evt) ? evt : log.debug("New event file (${evt.flowcell}) | No matching RTAComplete file") }
     .set { EventfilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
     EventfilesForRunning
     | mix(EventfilesForRunningFromRTACompletefiles)
-    | combine(GetGenpipes.out)
     | BeginRun
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }

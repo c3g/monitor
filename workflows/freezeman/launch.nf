@@ -58,41 +58,20 @@ process EmailAlertStart {
     tmpdir.delete()
 }
 
-process GetGenpipes {
-    executor 'local'
-    errorStrategy 'terminate'
-    input:
-    val(commit)
-
-    output:
-    path("genpipes")
-
-    script:
-    if (params.genpipes)
-        """
-        ln -s ${params.genpipes} genpipes
-        """
-    else
-        """
-        git clone git@bitbucket.org:mugqic/genpipes.git genpipes
-        cd genpipes
-        git checkout $commit
-        """
-}
-
 process BeginRun {
     executor 'local'
     errorStrategy 'terminate'
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val(runinfofile), path("genpipes")
+    val(runinfofile)
+    path(genpipes_folder)
 
     output:
     val(runinfofile)
 
     script:
-    def genpipes = "\$(realpath genpipes)"
+    def genpipes = genpipes_folder
     def rundate = new SimpleDateFormat("yyMMdd").format(runinfofile.startDate).toString()
     def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
@@ -203,7 +182,8 @@ workflow MatchRunInfofilesWithG400Runs {
     .map { new MgiSuccessfile(it) }
     .map { db.insert(it) }
 
-    // New success files should be stored and then checked to see if we should begin processing
+    // New success files should be stored and then checked to see if we should
+    // begin processing
     log.info("Watching for new MGI G400 success files at '${params.mgi.g400.success}'")
     Channel.watchPath(params.mgi.g400.success)
     .map { new MgiSuccessfile(it) }
@@ -225,12 +205,12 @@ workflow MatchRunInfofilesWithG400Runs {
     .map { RunInfofile rinfo -> db.hasSuccessfile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching *_Success.txt file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
+    // The following "pipeline" applied to channel had to be splitted to
+    // include params.genpipes as a parameter
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromSuccessfiles)
-    | combine(GetGenpipes.out)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
 }
@@ -269,12 +249,12 @@ workflow MatchRunInfofilesWithT7Runs {
     .map { RunInfofile rinfo -> db.hasFlagfile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching flag file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
+    // The following "pipeline" applied to channel had to be splitted to
+    // include params.genpipes as a parameter
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromFlagfiles)
-    | combine(GetGenpipes.out)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
 }
@@ -287,6 +267,7 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     def db = new MetadataDB(params.db, log)
 
     // Preexisting RTAComplete files go directly to the DB.
+    log.debug("ENTERING: DB inserts preexisting RTAComplete files")
     // Miseq
     Channel.fromPath(params.illumina.miseq)
     .map { new IlluminaRTACompletefile(it, "miseq") }
@@ -307,6 +288,7 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     Channel.fromPath(params.illumina.iseq2)
     .map { new IlluminaRTACompletefile(it, "iseq") }
     .map { db.insert(it) }
+    log.debug("EXITING: DB inserts preexisting RTAComplete files")
 
     // New RTAComplete files should be stored and then checked to see if we should begin processing
     log.info("Watching for new Illumina RTAComplete files at '${params.illumina.miseq}'")
@@ -359,6 +341,7 @@ workflow MatchRunInfofilesWithIlluminaRuns {
         }
     }
     .set { RunInfofilesForRunningFromNovaseq }
+    log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
 
     log.info("Watching for new Illumina RTAComplete files at '${params.illumina.iseq1}'")
     Channel.watchPath(params.illumina.iseq1)
@@ -394,12 +377,14 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     }
     .set { RunInfofilesForRunningFromISeq2 }
 
+    log.debug("ENTERING: Mixing channels")
     RunInfofilesForRunningFromMiseq
     | mix(RunInfofilesForRunningFromHiseqX)
     | mix(RunInfofilesForRunningFromNovaseq)
     | mix(RunInfofilesForRunningFromISeq1)
     | mix(RunInfofilesForRunningFromISeq2)
     | set { RunInfofilesForRunningFromRTACompletefiles }
+    log.debug("EXITING: Channels Mixed")
 
     runinfofiles.dump(tag: "illumina_rinf")
 
@@ -407,19 +392,23 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     .map { RunInfofile rinfo -> db.hasRTAcompletefile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching RTAComplete file") }
     .set { RunInfofilesForRunning }
 
-    Channel.from(params.commit) | GetGenpipes
-
+    log.debug("ENTERING: RunInfofilesForRunning Illumina case")
+    // The following "pipeline" applied to channel had to be splitted to
+    // include params.genpipes as a parameter
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromRTACompletefiles)
-    | combine(GetGenpipes.out)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
+    log.debug("EXITING: RunInfofilesForRunning Illumina case")
 }
 
 workflow Launch {
     WatchRunInfofiles()
     MatchRunInfofilesWithG400Runs(WatchRunInfofiles.out.mgig400)
     MatchRunInfofilesWithT7Runs(WatchRunInfofiles.out.mgit7)
+    log.debug("ENTERING: MatchRunInfofilesWithIlluminaRuns")
     MatchRunInfofilesWithIlluminaRuns(WatchRunInfofiles.out.illumina)
+    log.debug("EXITING: MatchRunInfofilesWithIlluminaRuns")
 }

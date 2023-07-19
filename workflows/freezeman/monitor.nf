@@ -75,8 +75,9 @@ process GenapUpload {
     script:
     def db = new MetadataDB(params.db, log)
     def runinf = db.latestRunInfofile(multiqc.flowcell)
+    def key = params.sftpssharbutus
     """
-    sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
+    sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
     put $report_html /datahub297/MGI_validation/${runinf.year}/${multiqc.run}.report.html
     chmod 664 /datahub297/MGI_validation/${runinf.year}/${multiqc.run}.report.html
     EOF
