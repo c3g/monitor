@@ -7,7 +7,7 @@ import groovy.text.markup.MarkupTemplateEngine
 
 process EmailAlertFinish {
     executor 'local'
-    errorStrategy 'terminate'
+    errorStrategy 'ignore'
 
     input:
     tuple val(multiqc_html), val(multiqc_json)
@@ -116,8 +116,9 @@ process SummaryReportUpload {
     script:
     def db = new MetadataDB(params.db, log)
     def runinf = db.latestRunInfofile(multiqc.flowcell)
+    def key = params.sftpssharbutus
     """
-    sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
+    sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
     put $report /datahub297/MGI_validation/${runinf.year}/${report.name}
     chmod 664 /datahub297/MGI_validation/${runinf.year}/${report.name}
     EOF

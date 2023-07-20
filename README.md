@@ -58,7 +58,10 @@ Notes
 The Launch part of the monitor is particularly slow to be ready to receive
 NovaSeq runs runinfofile. Even with the fzmn-child-process child config file
 that reduce the glob pattern to check for `RTAComplete.txt` files, the Launch
-for NovaSeq takes at least 25mins.
+for NovaSeq takes at least 25 mins.
+
+*The current version in production requires ~10 mins to be ready with MGI files
+and a good 8 hours for Illumina files.*
 
 Not only is the repo relying on Abacus' system and filesystem, the trigger that
 launches the run processing relies on files dropped in the
