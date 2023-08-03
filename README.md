@@ -4,7 +4,9 @@ Run Processing Monitor
 This nextflow workflow manages the monitoring and automates launch of run
 processing jobs following the completion of a run provided by the sequencing
 laboratory at McGill Genome Center. Launches rely on Freezeman for their inputs
-and outputs.
+and outputs. There is also a some legacy code that managed the same but from
+runs that were managed through Clarity (Illumina's proprietary Freezeman
+equivalent).
 
 Install
 -------
@@ -55,9 +57,11 @@ nexflow clean
 Notes
 -----
 
+### Launch delays
+
 The Launch part of the monitor is particularly slow to be ready to receive
 NovaSeq runs runinfofile. Even with the fzmn-child-process child config file
-that reduce the glob pattern to check for `RTAComplete.txt` files, the Launch
+that reduce the glob pattern to check for `RTAComplete.txt` files, the launch
 for NovaSeq takes at least 25 mins.
 
 *The current version in production requires ~10 mins to be ready with MGI files
@@ -69,4 +73,22 @@ launches the run processing relies on files dropped in the
 5min cron job under freezeman-[lims,qc,dev] users that drops them in a folder
 under freezeman-[lims,qc,dev] access.
 
+I put some efforts on the bloating of the monitor and I will not put anymore.
+Removing useless steps had an underwhelming impact on the overall monitor both
+on time to run and memory usage. Reduced from ~40GB RAM to ~30GB in production
+and similar impact on the launch of nextflow until all channels are up to
+monitor. The only impactful changes would be to reduce the number of open
+channels or limit the size of glob patterns and wildcards to match fewer
+filepaths in the filesystem. Doing so would require to revisit the way
+runinfofiles, RTAcomplete.txt and checkpoint files are monitored at the
+filesystem level by the watchPatch channels.
 
+### What is dependent on the monitor
+
+Even though this monitor needs to be able to take care of Illumina & MGI
+run_processing, at the moment, most run_processing is managed by Haig
+Djambazian's pipeline which I believe is a set of bash scripts. However, it
+seems that some of his processing relies on this monitor for complementary
+steps notably MultiQC and reporting emails. Currently investigating but I think
+it is the WatchCheckpoints workflow in monitor.nf that manages the interface
+between his stuff and this monitor.

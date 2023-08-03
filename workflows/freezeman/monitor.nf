@@ -86,7 +86,7 @@ process GenapUpload {
 
 process FreezemanIngest {
     tag { reportfile.getBaseName() }
-    module 'mugqic/pyhton/3.10.4'
+    module 'mugqic/pyhton/3.10.2'
     executor 'local'
     maxForks 1
 
