@@ -20,6 +20,9 @@ def execute(base_url,
             proxy = False,
             cert = False, # Certificate CA_BUNDLE location
             ):
+    """
+    JSON submission for Freezeman to ingest the run processing report.
+    """
     # Set up proxies to access internet : uncomment the 2 following lines to
     # run the script from inside the center.
     #os.environ["http_proxy"] = "http://192.168.32.1:3128"

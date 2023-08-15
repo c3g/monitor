@@ -57,6 +57,33 @@ nexflow clean
 Notes
 -----
 
+### Particular set-up
+
+The monitor is highly dependant on a number of softwares, env variables and
+paths that are only avaible on Abacus. It was not designed to be run outside of
+the freezeman-[lims,qc,dev] users environment and relus on some of their
+specific set-up. Notable examples of required set-up:
+
+1. The runinfofiles that are dumped by the Freezeman interface is copied via an
+   rsync 5min cron job that relies on a unique ssh-key for each
+   freezeman-[lims,qc,dev] to access the virtual machine under the
+   "intermediary" user. A different user will have to move or copy these files
+   themselves inside the directories set in `nextflow.config` under
+   `neweventpath` & `newruninfopath`
+
+2. Genpipes run_processing.py is using some software that are part of
+   $MUGQIC_INSTALL_HOME_PRIVATE, such as bcl2fastq, such as bcl2fastq. To
+   access these, one must set their environment using:
+
+   ```
+   export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
+   module use $MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
+   ```
+
+3. The user running the monitor should also have access to the run_processing
+   directories: `/nb/Research/<platform>/<run_folder>`
+
+
 ### Launch delays
 
 The Launch part of the monitor is particularly slow to be ready to receive
@@ -89,6 +116,8 @@ Even though this monitor needs to be able to take care of Illumina & MGI
 run_processing, at the moment, most run_processing is managed by Haig
 Djambazian's pipeline which I believe is a set of bash scripts. However, it
 seems that some of his processing relies on this monitor for complementary
-steps notably MultiQC and reporting emails. Currently investigating but I think
-it is the WatchCheckpoints workflow in monitor.nf that manages the interface
-between his stuff and this monitor.
+steps, notably MultiQC and reporting emails. They are part of WatchCheckpoints
+workflow in monitor.nf that manages the interface between Haig's stuff and this
+monitor. It uses to run from the main branch of the repo, under the bravolims
+user, but it hasn't been restarted since the last Abacus outages (2023/07/08 &
+2023/08/05).
