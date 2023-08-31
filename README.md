@@ -59,21 +59,22 @@ Notes
 
 ### Particular set-up
 
-The monitor is highly dependant on a number of softwares, env variables and
-paths that are only avaible on Abacus. It was not designed to be run outside of
-the freezeman-[lims,qc,dev] users environment and relus on some of their
-specific set-up. Notable examples of required set-up:
+The monitor is highly dependant on a number of softwares, env variables, ssh
+keys, paths and network access that are only avaible on Abacus. It was not
+designed to be run outside of the freezeman-[lims,qc,dev] users environment and
+relies on some of their specific set-up. Notable examples of required set-up:
 
-1. The runinfofiles that are dumped by the Freezeman interface is copied via an
-   rsync 5min cron job that relies on a unique ssh-key for each
-   freezeman-[lims,qc,dev] to access the virtual machine under the
-   "intermediary" user. A different user will have to move or copy these files
-   themselves inside the directories set in `nextflow.config` under
-   `neweventpath` & `newruninfopath`
+1. The runinfofiles are dumped by the Freezeman interface when an experiment is
+   "Launched" to be processed and reingested to be added as a "Dataset" for run
+   validation. They are copied via an rsync 5min cron job that relies on a
+   unique ssh-key for each freezeman-[lims,qc,dev] to access the virtual
+   machine under the "intermediary" user. A different user will have to move or
+   copy these files themselves inside the directories set in `nextflow.config`
+   under `neweventpath` & `newruninfopath`
 
 2. Genpipes run_processing.py is using some software that are part of
-   $MUGQIC_INSTALL_HOME_PRIVATE, such as bcl2fastq, such as bcl2fastq. To
-   access these, one must set their environment using:
+   $MUGQIC_INSTALL_HOME_PRIVATE, such as bcl2fastq. To access these, one must
+   set their environment using:
 
    ```
    export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
@@ -83,13 +84,25 @@ specific set-up. Notable examples of required set-up:
 3. The user running the monitor should also have access to the run_processing
    directories: `/nb/Research/<platform>/<run_folder>`
 
+4. Review the content of nextflow.config before launch. Paths listed in the
+   configs should exist since the monitor will try to read from them in the
+   early steps. There is also a final copy of the run_processing output files
+   that is targeting a directory listed in the config parameter `custom_ini`
+   files that should target one of the provided `.ini` files in the `assets`
+   folder. Make sure that this folder exists before launching. In the `.ini`,
+   search for
+
+   ```
+   [copy]
+   destination_folder=/lb/project/mugqic/projects/[...]
+   ```
 
 ### Launch delays
 
 The Launch part of the monitor is particularly slow to be ready to receive
 NovaSeq runs runinfofile. Even with the fzmn-child-process child config file
 that reduce the glob pattern to check for `RTAComplete.txt` files, the launch
-for NovaSeq takes at least 25 mins.
+for Illumina takes at least 25 mins.
 
 *The current version in production requires ~10 mins to be ready with MGI files
 and a good 8 hours for Illumina files.*

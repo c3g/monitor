@@ -13,7 +13,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
-    errorStrategy 'ignore'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
 
     input:
     val(runinfofile)
@@ -22,7 +22,7 @@ process EmailAlertStart {
     val(runinfofile)
 
     when:
-    !params.nomail
+    params.sendmail
 
     exec:
     // println runinfofile
@@ -60,7 +60,7 @@ process EmailAlertStart {
 
 process BeginRun {
     executor 'local'
-    errorStrategy 'terminate'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     module 'mugqic/python/3.10.4'
 
     input:

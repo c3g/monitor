@@ -7,13 +7,13 @@ import groovy.text.markup.MarkupTemplateEngine
 
 process EmailAlertFinish {
     executor 'local'
-    errorStrategy 'ignore'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
 
     input:
     tuple val(multiqc_html), val(multiqc_json)
 
     when:
-    !params.nomail
+    params.sendmail
 
     exec:
     def db = new MetadataDB(params.db, log)
@@ -43,10 +43,10 @@ process EmailAlertFinish {
 
 process RunMultiQC {
     tag { donefile.getBaseName() }
-    module 'mugqic_dev/MultiQC_C3G/1.12_beta'
     executor 'local'
-    errorStrategy 'terminate'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     maxForks 1
+    module 'mugqic_dev/MultiQC_C3G/1.12_beta'
 
     input:
     tuple path(rundir), path(donefile)
@@ -65,9 +65,8 @@ process RunMultiQC {
 process GenapUpload {
     tag { multiqc.flowcell }
     executor 'local'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     maxForks 1
-    errorStrategy 'retry'
-    maxErrors 3
 
     input:
     tuple path(report_html), val(multiqc)
@@ -86,12 +85,13 @@ process GenapUpload {
 
 process FreezemanIngest {
     tag { reportfile.getBaseName() }
-    module 'mugqic/pyhton/3.10.2'
     executor 'local'
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     maxForks 1
+    module 'mugqic/python/3.10.2'
 
     input:
-    path reportfile
+    path(reportfile)
 
     """
     python freezemanIngestor.py \\
@@ -106,8 +106,7 @@ process FreezemanIngest {
 process SummaryReportUpload {
     tag { report.name - "_L01.summaryReport.html" }
     executor 'local'
-    errorStrategy 'retry'
-    maxErrors 3
+    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     maxForks 1
 
     input:

@@ -22,7 +22,7 @@ process EmailAlertStart {
     val(eventfile)
 
     when:
-    !params.nomail
+    params.sendmail
 
     exec:
     def rows = parseCsv(eventfile.text, separator: '\t').collect()

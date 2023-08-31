@@ -13,7 +13,7 @@ process EmailAlertFinish {
     tuple val(multiqc_html), val(multiqc_json)
 
     when:
-    !params.nomail
+    params.sendmail
 
     exec:
     def db = new MetadataDB(params.db, log)
