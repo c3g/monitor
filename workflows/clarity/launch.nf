@@ -86,13 +86,14 @@ process BeginRun {
     module 'mugqic/python/3.10.4'
 
     input:
-    tuple val(eventfile), path(params.genpipes)
+    tuple val(eventfile)
+    path(genpipes_folder)
 
     output:
     val(eventfile)
 
     script:
-    def genpipes = "\$(realpath params.genpipes)"
+    def genpipes = genpipes_folder
     def rundate = new SimpleDateFormat("yyMMdd").format(eventfile.startDate).toString()
     def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
@@ -224,7 +225,8 @@ workflow MatchEventfilesWithG400Runs {
 
     EventfilesForRunning
     | mix(EventfilesForRunningFromSuccessfiles)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
 }
@@ -265,7 +267,8 @@ workflow MatchEventfilesWithT7Runs {
 
     EventfilesForRunning
     | mix(EventfilesForRunningFromFlagfiles)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
 }
@@ -399,7 +402,8 @@ workflow MatchEventfilesWithIlluminaRuns {
 
     EventfilesForRunning
     | mix(EventfilesForRunningFromRTACompletefiles)
-    | BeginRun
+    | set { intermediateValue }
+    BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { Eventfile evt -> db.markAsLaunched(evt) }
 }
