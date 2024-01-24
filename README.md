@@ -24,9 +24,8 @@ git clone --recurse-submodules https://github.com/c3g/monitor.git
 Usage
 -----
 
-The monitor is dependant on the local McGill University cluster, Abacus.
-
-Make sure to load the required modules before launching it.
+The monitor is dependant on the local McGill University cluster, Abacus. Make
+sure to load the required modules before launching it.
 
 ```
 module purge && module load mugqic/java/openjdk-jdk-17.0.1 mugqic/nextflow/22.10.6 mugqic/python/3.10.2
