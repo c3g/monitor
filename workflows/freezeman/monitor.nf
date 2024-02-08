@@ -94,12 +94,12 @@ process FreezemanIngest {
     path(reportfile)
 
     """
-    python freezemanIngestor.py \\
-        -url http://f5kvm-biobank-qc.genome.mcgill.ca/api/ \\
-        -user ehenrion \\
-        -password <??password??> \\
-        -filepath $reportfile
-
+    python bin/freezemanIngestor.py \\
+        --url ${params.ingest} \\
+        --user techdevadmin \\
+        --passwd \$(cat ~/assets/techdevadmin) \\
+        --cert $projectDir/assets/fullbundle.pem \\
+         $reportfile
     """
 }
 
@@ -161,8 +161,8 @@ workflow WatchFinish {
     | (GenapUpload & EmailAlertFinish)
 
     // // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
-    // donefiles
-    // | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
-    // | splitText()
-    // | FreezemanIngest
+    donefiles
+    | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
+    | splitText()
+    | FreezemanIngest
 }
