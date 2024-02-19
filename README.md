@@ -31,16 +31,25 @@ sure to load the required modules before launching it.
 module purge && module load mugqic/java/openjdk-jdk-17.0.1 mugqic/nextflow/22.10.6 mugqic/python/3.10.2
 ```
 
-The simplest usage of the monitor is to run `main.nf` along with
+The simplest usage of the monitor is to run `main.nf` along with an entrypoint.
+To reduce the ressources usage, limiting the entrypoint to Freezeman monitoring
+is recommended, particularly knowing that Clarity support is deprecated.
+
+Profiles are used to set configurations, they change behaviors such as emailing
+notifications, filepath globs to watch for sequencing files, remote access
+details and more.
+
+The production profile should not be changed lightly and is only meant to be
+run by the freezeman-lims user on Abacus.
 
 ```
-nextflow run main.nf -profile [production,debug,dev] -entry [Monitor,Launch,MonitorAndLaunch]   
+nextflow run main.nf -profile [production,debug,dev] -entry [Freezeman][Monitor,Launch,MonitorAndLaunch]   
 ```
 
 Redirecting the logs is recommended.
 
 ```
-nextflow -log [filepath].log run main.nf -profile [production,debug,dev] -entry [Monitor,Launch,MonitorAndLaunch]
+nextflow -log [filepath].log run main.nf -profile [production,debug,dev] -entry [Freezeman][Monitor,Launch,MonitorAndLaunch]
 ```
 
 Remember to keep the nextflow logs tidy with

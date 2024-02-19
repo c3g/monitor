@@ -49,28 +49,29 @@ def execute(base_url,
         print(headers)
 
         # Extract json from file
-        with open(filepath, 'r') as inputfile:
-            data = inputfile.read()
-        data = json.loads(data)
+        for iterfile in filepath:
+            with open(iterfile, 'r') as inputfile:
+                data = inputfile.read()
+            data = json.loads(data)
 
-        print("Submitting json file to Freezeman")
-        response = requests.post(args.url + DATASETS_ENDPOINT,
-                                 json = data,
-                                 headers = headers,
-                                 verify = cert)
+            print("Submitting json file to Freezeman", iterfile)
+            response = requests.post(args.url + DATASETS_ENDPOINT,
+                                     json = data,
+                                     headers = headers,
+                                     verify = cert)
 
-        if response.status_code == 200:
-            print("Receiving data...")
-            try:
-                print(response.content.decode('utf-8'))
-            except Exception as e:
-                print("Failed writing result file : ", str(e.message))
+            if response.status_code == 200:
+                print("Receiving data...")
+                try:
+                    print(response.content.decode('utf-8'))
+                except Exception as e:
+                    print("Failed writing result file : ", str(e.message))
 
-            print("Operation complete!")
-        else:
-            print("Failed call to Freezeman API : ",
-                  str(response.status_code),
-                  "\n", response.text)
+                print("Operation complete!")
+            else:
+                print("Failed call to Freezeman API : ",
+                      str(response.status_code),
+                      "\n", response.text)
     else:
         print("Failed to authenticate...", file = sys.stderr)
         print(auth.text)
@@ -94,6 +95,7 @@ if __name__ == '__main__':
                         help = "Password (CAUTION plain text, omit and use \
                         --user alone for secure prompt)")
     parser.add_argument("filepath",
+                        nargs='+',
                         metavar = "JSON",
                         help = "Run Processing json file path")
     args = parser.parse_args()

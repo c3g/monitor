@@ -84,7 +84,7 @@ process GenapUpload {
 }
 
 process FreezemanIngest {
-    tag { reportfile.getBaseName() }
+    tag { reportfile }
     executor 'local'
     errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
     maxForks 1
@@ -94,10 +94,10 @@ process FreezemanIngest {
     path(reportfile)
 
     """
-    python bin/freezemanIngestor.py \\
+    python $projectDir/bin/freezemanIngestor.py \\
         --url ${params.ingest} \\
         --user techdevadmin \\
-        --passwd \$(cat ~/assets/techdevadmin) \\
+        --password \$(cat ~/assets/.techdevadmin) \\
         --cert $projectDir/assets/fullbundle.pem \\
          $reportfile
     """
@@ -122,6 +122,8 @@ process SummaryReportUpload {
     chmod 664 /datahub297/MGI_validation/${runinf.year}/${report.name}
     EOF
     """
+// TODO include var ${multiqc_json.seqtype} in the datahub path to separate MGI
+//      and Illumina reports.
 }
 
 workflow WatchCheckpoints {
@@ -153,16 +155,24 @@ workflow WatchFinish {
     log.info "Watching for .done files at ${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done"
     donefiles = Channel.watchPath("${params.mgi.outdir}/*/job_output/final_notification/final_notification.*.done", 'create,modify')
 
+    // // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
+    donefiles
+//    | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
+//    | splitText()
+    | map { donefile ->
+        validationList = []
+        rundir = donefile.getParent().getParent().getParent()
+        rundir.eachFileRecurse(groovy.io.FileType.FILES) {
+            if(it.name.endsWith('.run_validation_report.json')) { validationList.add(it) }
+        }
+        validationList ?: null
+    }
+    | FreezemanIngest
+
     // Upload to GenAP + Send end-of-processing email notification
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | (GenapUpload & EmailAlertFinish)
-
-    // // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
-    donefiles
-    | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
-    | splitText()
-    | FreezemanIngest
 }

@@ -1,7 +1,6 @@
-.nextflow*
-work
-outputs
-
 *.swp
 *.swo
 *.swn
+
+.nextflow*
+work
