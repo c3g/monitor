@@ -66,15 +66,18 @@ def execute(base_url,
                     print(response.content.decode('utf-8'))
                 except Exception as e:
                     print("Failed writing result file : ", str(e.message))
+                    raise e
 
                 print("Operation complete!")
             else:
                 print("Failed call to Freezeman API : ",
                       str(response.status_code),
                       "\n", response.text)
+                sys.exit(1)
     else:
         print("Failed to authenticate...", file = sys.stderr)
         print(auth.text)
+        sys.exit(1)
 
 if __name__ == '__main__':
     # Get parameters from command line
