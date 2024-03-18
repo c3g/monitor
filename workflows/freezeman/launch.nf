@@ -276,13 +276,13 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //Channel.fromPath(params.illumina.hiseqx)
     //.map { new IlluminaRTACompletefile(it, "hiseqx") }
     //.map { db.insert(it) }
-    // Novaseq
-    Channel.fromPath(params.illumina.novaseq)
-    .map { new IlluminaRTACompletefile(it, "novaseq") }
-    .map { db.insert(it) }
     // NovaseqX
     Channel.fromPath(params.illumina.novaseqx)
     .map { new IlluminaRTACompletefile(it, "novaseqx") }
+    .map { db.insert(it) }
+    // Novaseq
+    Channel.fromPath(params.illumina.novaseq)
+    .map { new IlluminaRTACompletefile(it, "novaseq") }
     .map { db.insert(it) }
     // iSeq
     //Channel.fromPath(params.illumina.iseq1)
@@ -329,24 +329,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //}
     //.set { RunInfofilesForRunningFromHiseqX }
 
-    log.info("Watching for new Illumina RTAComplete files at '${params.illumina.novaseq}'")
-    Channel.watchPath(params.illumina.novaseq)
-    .map { new IlluminaRTACompletefile(it, "novaseq") }
-    .map { rf ->
-        db.insert(rf)
-        def rinfo = db.latestRunInfofile(rf.flowcell)
-        if (rinfo == null) {
-            log.debug("New RTAComplete file (${rf.flowcell}) | No matching runinfo file")
-        } else if (rinfo.alreadyLaunched()) {
-            log.debug("New RTAComplete file (${rf.flowcell}) | Latest runinfo file already launched: ${rinfo}")
-        } else {
-            log.debug("New RTAComplete file (${rf.flowcell}) | Found a live runinfo file: ${rinfo}")
-            return rinfo
-        }
-    }
-    .set { RunInfofilesForRunningFromNovaseq }
-    log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
-
     log.info("Watching for new Illumina RTAComplete files at '${params.illumina.novaseqx}'")
     Channel.watchPath(params.illumina.novaseqx)
     .map { new IlluminaRTACompletefile(it, "novaseqx") }
@@ -363,6 +345,24 @@ workflow MatchRunInfofilesWithIlluminaRuns {
         }
     }
     .set { RunInfofilesForRunningFromNovaseqX }
+    log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
+
+    log.info("Watching for new Illumina RTAComplete files at '${params.illumina.novaseq}'")
+    Channel.watchPath(params.illumina.novaseq)
+    .map { new IlluminaRTACompletefile(it, "novaseq") }
+    .map { rf ->
+        db.insert(rf)
+        def rinfo = db.latestRunInfofile(rf.flowcell)
+        if (rinfo == null) {
+            log.debug("New RTAComplete file (${rf.flowcell}) | No matching runinfo file")
+        } else if (rinfo.alreadyLaunched()) {
+            log.debug("New RTAComplete file (${rf.flowcell}) | Latest runinfo file already launched: ${rinfo}")
+        } else {
+            log.debug("New RTAComplete file (${rf.flowcell}) | Found a live runinfo file: ${rinfo}")
+            return rinfo
+        }
+    }
+    .set { RunInfofilesForRunningFromNovaseq }
     log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
 
     //log.info("Watching for new Illumina RTAComplete files at '${params.illumina.iseq1}'")
@@ -402,8 +402,8 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     log.debug("ENTERING: Mixing channels")
     RunInfofilesForRunningFromMiseq
     //| mix(RunInfofilesForRunningFromHiseqX)
-    | mix(RunInfofilesForRunningFromNovaseq)
     | mix(RunInfofilesForRunningFromNovaseqX)
+    | mix(RunInfofilesForRunningFromNovaseq)
     //| mix(RunInfofilesForRunningFromISeq1)
     //| mix(RunInfofilesForRunningFromISeq2)
     | set { RunInfofilesForRunningFromRTACompletefiles }

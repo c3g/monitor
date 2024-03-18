@@ -122,8 +122,6 @@ process SummaryReportUpload {
     chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${report.name}
     EOF
     """
-// TODO include var ${multiqc_json.seqtype} in the datahub path to separate MGI
-//      and Illumina reports.
 }
 
 workflow WatchCheckpoints {
