@@ -77,8 +77,8 @@ process GenapUpload {
     def key = params.sftpssharbutus
     """
     sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/${runinf.year}/${multiqc.run}.report.html
-    chmod 664 /datahub297/MGI_validation/${runinf.year}/${multiqc.run}.report.html
+    put $report_html /datahub297/Freezeman_validation/${runinf.year}/${multiqc.run}.report.html
+    chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${multiqc.run}.report.html
     EOF
     """
 }
@@ -118,8 +118,8 @@ process SummaryReportUpload {
     def key = params.sftpssharbutus
     """
     sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report /datahub297/MGI_validation/${runinf.year}/${report.name}
-    chmod 664 /datahub297/MGI_validation/${runinf.year}/${report.name}
+    put $report /datahub297/Freezeman_validation/${runinf.year}/${report.name}
+    chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${report.name}
     EOF
     """
 // TODO include var ${multiqc_json.seqtype} in the datahub path to separate MGI
