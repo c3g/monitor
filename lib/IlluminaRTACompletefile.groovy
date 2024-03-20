@@ -9,9 +9,15 @@ class IlluminaRTACompletefile {
     IlluminaRTACompletefile(Path path, String type) {
         this.path = path.toAbsolutePath()
         this.lastmodified = path.lastModified()
-        def raw_flowcell = path.toString().split('/')[-2].split('_')[-2]
-        this.flowcell = raw_flowcell[1..raw_flowcell.size()-1]
         this.seqtype = type
+        def novx = "novaseqx"
+        def raw_flowcell
+        if ( type == novx ) {
+            raw_flowcell = path.toString().split('/')[-2].split('_')[3]
+        } else {
+            raw_flowcell = path.toString().split('/')[-2].split('_')[-2]
+        }
+        this.flowcell = raw_flowcell[1..raw_flowcell.size()-1]
     }
 
     String flowcell() {
