@@ -35,14 +35,14 @@ yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
     head {
         meta('http-equiv':'"Content-Type" content="text/html; charset=utf-8"')
-        title("MGI Run finished: ${run.run}")
+        title("${platform} Run finished: ${run.run}")
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
             h3 "Run: ${run.run} (${run.flowcell})"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2023/${run.run}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/${event.year}/${run.run}.report.html", "on GenAP" )
                 span "."
             }
             ul {
@@ -83,6 +83,11 @@ html(lang:'en') {
                 span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }
             p(style:"color: #999999; font-size: 12px", "C3G Run Processing.")
+            // p {
+            //     span(class:"apple-link", style:"color: #999999; font-size: 12px; text-align: center;") {
+            //         a(href:"https://c3g.ca/", style:"text-decoration: none; color: #999999; font-size: 12px; text-align: center;", "C3G Run Processing")
+            //     }
+            // }
         }
     }
 }
