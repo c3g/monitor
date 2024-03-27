@@ -73,6 +73,7 @@ process BeginRun {
     script:
     def genpipes = genpipes_folder
     def rundate = new SimpleDateFormat("yyMMdd").format(runinfofile.startDate).toString()
+    def year = new SimpleDateFormat("yyyy").format(runinfofile.startDate).toString()
     def custom_ini = params?.custom_ini ?: ""
     def rundir = ""
     def outdir_root = ""
@@ -97,7 +98,7 @@ process BeginRun {
         seqtype = "dnbseqt7"
     }
     def run_name = "\$(basename ${rundir})"
-    def outdir = "${outdir_root}/${run_name}-${seqtype}"
+    def outdir = "${outdir_root}/${seqtype}/${year}/${run_name}-${seqtype}"
 
     """
 export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
@@ -267,7 +268,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     def db = new MetadataDB(params.db, log)
 
     // Preexisting RTAComplete files go directly to the DB.
-    log.debug("ENTERING: DB inserts preexisting RTAComplete files")
     // Miseq
     Channel.fromPath(params.illumina.miseq)
     .map { new IlluminaRTACompletefile(it, "miseq") }
@@ -292,7 +292,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //Channel.fromPath(params.illumina.iseq2)
     //.map { new IlluminaRTACompletefile(it, "iseq") }
     //.map { db.insert(it) }
-    log.debug("EXITING: DB inserts preexisting RTAComplete files")
 
     // New RTAComplete files should be stored and then checked to see if we should begin processing
     log.info("Watching for new Illumina RTAComplete files at '${params.illumina.miseq}'")
@@ -345,7 +344,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
         }
     }
     .set { RunInfofilesForRunningFromNovaseqX }
-    log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
 
     log.info("Watching for new Illumina RTAComplete files at '${params.illumina.novaseq}'")
     Channel.watchPath(params.illumina.novaseq)
@@ -363,7 +361,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
         }
     }
     .set { RunInfofilesForRunningFromNovaseq }
-    log.debug("CHECKING: Illumina NovaSeq watchPath channel running?")
 
     //log.info("Watching for new Illumina RTAComplete files at '${params.illumina.iseq1}'")
     //Channel.watchPath(params.illumina.iseq1)
@@ -399,7 +396,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //}
     //.set { RunInfofilesForRunningFromISeq2 }
 
-    log.debug("ENTERING: Mixing channels")
     RunInfofilesForRunningFromMiseq
     //| mix(RunInfofilesForRunningFromHiseqX)
     | mix(RunInfofilesForRunningFromNovaseqX)
@@ -407,7 +403,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //| mix(RunInfofilesForRunningFromISeq1)
     //| mix(RunInfofilesForRunningFromISeq2)
     | set { RunInfofilesForRunningFromRTACompletefiles }
-    log.debug("EXITING: Channels Mixed")
 
     runinfofiles.dump(tag: "illumina_rinf")
 
@@ -415,7 +410,6 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     .map { RunInfofile rinfo -> db.hasRTAcompletefile(rinfo) ? rinfo : log.debug("New runinfo file (${rinfo.flowcell}) | No matching RTAComplete file") }
     .set { RunInfofilesForRunning }
 
-    log.debug("ENTERING: RunInfofilesForRunning Illumina case")
     // The following "pipeline" applied to channel had to be splitted to
     // include params.genpipes as a parameter
     RunInfofilesForRunning
@@ -424,14 +418,11 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     BeginRun(intermediateValue, params.genpipes)
     | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
-    log.debug("EXITING: RunInfofilesForRunning Illumina case")
 }
 
 workflow Launch {
     WatchRunInfofiles()
     MatchRunInfofilesWithG400Runs(WatchRunInfofiles.out.mgig400)
     MatchRunInfofilesWithT7Runs(WatchRunInfofiles.out.mgit7)
-    log.debug("ENTERING: MatchRunInfofilesWithIlluminaRuns")
     MatchRunInfofilesWithIlluminaRuns(WatchRunInfofiles.out.illumina)
-    log.debug("EXITING: MatchRunInfofilesWithIlluminaRuns")
 }
