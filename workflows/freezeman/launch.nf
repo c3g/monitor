@@ -88,13 +88,13 @@ process BeginRun {
         seqtype = db.seqType(runinfofile)
     } else if (runinfofile.platform == "mgig400") {
         rundir = "\$(ls -dt /nb/Research/MGISeq/seq[12]/R213040019001[68]/*${runinfofile.flowcell}* | head -n 1)"
-        outdir_root = params.mgi.outdir
+        outdir_root = params.outdir
         seqtype = "dnbseqg400"
     } else if (runinfofile.platform == "mgit7") {
         rundir = "/nb/Research/MGISeq/T7/R1100600200054/upload/workspace/${runinfofile.flowcell}"
         // splitbarcodeDemux = (params?.mgi?.t7?.demux) ? "--splitbarcode-demux" : ""
         flag = "--flag ${params.mgi.t7.flags}"
-        outdir_root = params.mgi.outdir
+        outdir_root = params.outdir
         seqtype = "dnbseqt7"
     }
     def run_name = "\$(basename ${rundir})"
