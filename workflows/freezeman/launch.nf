@@ -83,7 +83,7 @@ process BeginRun {
     
     if (runinfofile.platform == "illumina") {
         rundir = "\$(ls -dt /nb/Research/*/*${runinfofile.flowcell}* | grep -v 'processing' | head -n 1)"
-        outdir_root = params.illumina.outdir
+        outdir_root = params.outdir
         def db = new MetadataDB(params.db, log)
         seqtype = db.seqType(runinfofile)
     } else if (runinfofile.platform == "mgig400") {
