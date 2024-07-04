@@ -153,7 +153,7 @@ workflow WatchFinish {
     log.info "Watching for .done files at ${params.outdir}/*/20*/*/job_output/final_notification/final_notification.*.done"
     donefiles = Channel.watchPath("${params.outdir}/*/20*/*/job_output/final_notification/final_notification.*.done", 'create,modify')
 
-    // // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
+    // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
     donefiles
 //    | map { donefile -> "${donefile.getParent().getParent().getParent()}/report/*.run_validation_report.json" }
 //    | splitText()

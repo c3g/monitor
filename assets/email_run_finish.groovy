@@ -40,6 +40,7 @@ html(lang:'en') {
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
             h3 "Run: ${run.run} (${run.flowcell})"
+            h3 "Folder: ${run.analysis_dir}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
                 a ( href:"https://datahub-297-p25.p.genap.ca/Freezeman_validation/${event.year}/${run.run}.report.html", "on GenAP" )

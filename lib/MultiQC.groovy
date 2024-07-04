@@ -7,11 +7,13 @@ class MultiQC {
     Map data
     String flowcell
     String run
+    String analysis_dir
 
     MultiQC(String path) {
         def file = new File(path)
         def jsonSlurper = new JsonSlurper().setType( JsonParserType.LAX )
         this.data = jsonSlurper.parseText(file.text)
+        this.analysis_dir = data?.config_analysis_dir
         def config_report_header_info = data?.config_report_header_info
         this.flowcell = config_report_header_info.find { it.containsKey("Flowcell") }.Flowcell
         this.run = config_report_header_info.find { it.containsKey("Run") }.Run
@@ -20,6 +22,7 @@ class MultiQC {
     MultiQC(Path path) {
         def jsonSlurper = new JsonSlurper().setType( JsonParserType.LAX )
         this.data = jsonSlurper.parseText(path.getText())
+        this.analysis_dir = data?.config_analysis_dir
         def config_report_header_info = data?.config_report_header_info
         this.flowcell = config_report_header_info.find { it.containsKey("Flowcell") }.Flowcell
         this.run = config_report_header_info.find { it.containsKey("Run") }.Run
