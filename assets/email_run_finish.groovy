@@ -39,7 +39,7 @@ html(lang:'en') {
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
-            h3 "Run: ${run.run} (${run.flowcell})"
+            h3 "Run: ${event.data.run_name} (${run.flowcell})"
             h3 "Folder: ${run.analysis_dir}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
@@ -50,6 +50,24 @@ html(lang:'en') {
                 li "Spread: ${run.headerInfo.Spreads}"
                 li "Yield assigned to samples: ${nfGeneral.format(yield)} bp"
                 li "Instrument: ${run.headerInfo.Instrument}"
+            }
+            table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
+                tbody {
+                    tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {
+                        th(style:'padding: 5px 10px', "Project Name")
+                        th(style:'padding: 5px 10px', "Samples")
+                    }
+                    samples.countBy{it.ProjectName ? it.ProjectName : it.project_name}.each { projectname, count -> 
+                        tr(style:'border: 2px solid #dddddd;') {
+                            td style:"padding: 5px 10px; font-weight: bold", projectname
+                            td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
+                        }
+                    }
+                    tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
+                        td "Total"
+                        td  samples.size() == 1 ? "${samples.size()} sample" : "${samples.size()} samples"
+                    }
+                }
             }
             table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
                 thead {

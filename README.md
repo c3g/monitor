@@ -65,46 +65,6 @@ nexflow clean
 Notes
 -----
 
-### Particular set-up
-
-The monitor is highly dependant on a number of softwares, env variables, ssh
-keys, paths and network access that are only avaible on Abacus. It was not
-designed to be run outside of the freezeman-[lims,qc,dev] users environment and
-relies on some of their specific set-up. Notable examples of required set-up:
-
-1. The runinfofiles are dumped by the Freezeman interface when an experiment is
-   "Launched" to be processed and reingested to be added as a "Dataset" for run
-   validation. They are copied via an rsync 5min cron job that relies on a
-   unique ssh-key for each freezeman-[lims,qc,dev] to access the virtual
-   machine under the "intermediary" user. A different user will have to move or
-   copy these files themselves inside the directories set in `nextflow.config`
-   under `neweventpath` & `newruninfopath`
-
-2. Genpipes run_processing.py is using some software that are part of
-   $MUGQIC_INSTALL_HOME_PRIVATE, such as bcl2fastq. To access these, one must
-   set their environment using:
-
-   ```
-   export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
-   module use $MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
-   ```
-
-3. The user running the monitor should also have access to the run_processing
-   directories: `/nb/Research/<platform>/<run_folder>`
-
-4. Review the content of nextflow.config before launch. Paths listed in the
-   configs should exist since the monitor will try to read from them in the
-   early steps. There is also a final copy of the run_processing output files
-   that is targeting a directory listed in the config parameter `custom_ini`
-   files that should target one of the provided `.ini` files in the `assets`
-   folder. Make sure that this folder exists before launching. In the `.ini`,
-   search for
-
-   ```
-   [copy]
-   destination_folder=/lb/project/mugqic/projects/[...]
-   ```
-
 ### Launch delays
 
 The Launch part of the monitor is particularly slow to be ready to receive
@@ -131,6 +91,63 @@ filepaths in the filesystem. Doing so would require to revisit the way
 runinfofiles, RTAcomplete.txt and checkpoint files are monitored at the
 filesystem level by the watchPatch channels.
 
+**Most of the time lost is spent managing the database** which is used to match
+runs to their metadata. Their are columns that are used to get filepaths,
+timestamps and such, but unfortunately **the entire run info json file is store
+in a cell for each run**. Parsing these is the time consuming step. Therefore
+the minimal launch time can be obtained with the smallest database, I recommend
+to move/remove the previous database before launch. Be weary that the monitor
+won't monitor runs that were process prior to this move/remove.
+
+Typical "short" launch:
+
+```
+module load mugqic/java/openjdk-jdk-17.0.1 mugqic/nextflow/22.10.6 mugqic/python/3.10.2 && mv /nb/Research/freezeman-processing/monitor.db /nb/Research/freezeman-processing/db.bu/monitor.db.240704 && nextflow -log log/log run main.nf -profile production -entry FreezemanMonitorAndLaunch -bg
+```
+
+### Particular set-up
+
+The monitor is highly dependant on a number of softwares, env variables, ssh
+keys, paths and network access that are only avaible on Abacus. It was not
+designed to be run outside of the freezeman-[lims,qc,dev] users environment and
+relies on some of their specific set-up. Notable examples of required set-up:
+
+1. The runinfofiles are dumped by the Freezeman interface when an experiment is
+   "Launched" to be processed and reingested to be added as a "Dataset" for run
+   validation. They are copied via an rsync 5min cron job that relies on a
+   unique ssh-key for each freezeman-[lims,qc,dev] to access the virtual
+   machine under the "intermediary" user. A different user will have to move or
+   copy these files themselves inside the directories set in `nextflow.config`
+   under `neweventpath` & `newruninfopath`
+
+2. Genpipes run_processing.py is using some software that are part of
+   $MUGQIC_INSTALL_HOME_PRIVATE, such as bcl2fastq. To access these, one must
+   set their environment using:
+
+   ```
+   export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
+   module use $MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
+   ```
+   
+   User freezeman-lims have $MUGQIC_INSTALL_HOME_PRIVATE set-up in its
+   `~.bash_profile`.
+
+3. The user running the monitor should also have access to the run_processing
+   directories: `/nb/Research/<platform>/<run_folder>`
+
+4. Review the content of nextflow.config before launch. Paths listed in the
+   configs should exist since the monitor will try to read from them in the
+   early steps. There is also a final copy of the run_processing output files
+   that is targeting a directory listed in the config parameter `custom_ini`
+   files that should target one of the provided `.ini` files in the `assets`
+   folder. Make sure that this folder exists before launching. In the `.ini`,
+   search for
+
+   ```
+   [copy]
+   destination_folder=/lb/project/mugqic/projects/[...]
+   ```
+
 ### What is dependent on the monitor
 
 Even though this monitor needs to be able to take care of Illumina & MGI
@@ -139,6 +156,6 @@ Djambazian's pipeline which I believe is a set of bash scripts. However, it
 seems that some of his processing relies on this monitor for complementary
 steps, notably MultiQC and reporting emails. They are part of WatchCheckpoints
 workflow in monitor.nf that manages the interface between Haig's stuff and this
-monitor. It uses to run from the main branch of the repo, under the bravolims
+monitor. It used to run from the main branch of the repo, under the bravolims
 user, but it hasn't been restarted since the last Abacus outages (2023/07/08 &
 2023/08/05).

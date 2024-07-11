@@ -20,6 +20,7 @@ class RunInfofile {
     Long lastmodified
     Long lastlaunched
     String flowcell
+    String run_name
     Logger log
 
     RunInfofile(String path, Logger log) {
@@ -29,6 +30,7 @@ class RunInfofile {
         this.filename = file.getName()
         this.lastmodified = file.lastModified()
         this.flowcell = this.ContainerName()
+        this.run_name = this.GetRunName()
         this.log = log
     }
 
@@ -38,6 +40,7 @@ class RunInfofile {
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
+        this.run_name = this.GetRunName()
         this.log = log
     }
 
@@ -47,6 +50,7 @@ class RunInfofile {
         this.filename = path.getFileName()
         this.lastmodified = path.lastModified()
         this.flowcell = this.ContainerName()
+        this.run_name = this.GetRunName()
         this.log = log
     }
 
@@ -56,6 +60,7 @@ class RunInfofile {
         this.filename = filename
         this.lastlaunched = lastlaunched
         this.flowcell = this.ContainerName()
+        this.run_name = this.GetRunName()
         this.log = log
     }
 
@@ -78,6 +83,10 @@ class RunInfofile {
 
     String ContainerName() {
         return this.data['container_barcode']
+    }
+
+    String GetRunName() {
+        return this.data['run_name']
     }
 
     Date getStartDate() {
