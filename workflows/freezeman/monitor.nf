@@ -60,6 +60,7 @@ process RunMultiQC {
         --template c3g \\
         --runprocessing \\
         --interactive
+    cp -r multiqc_* $rundir/report
     """
 }
 
