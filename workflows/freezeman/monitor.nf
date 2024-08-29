@@ -35,7 +35,6 @@ process EmailAlertFinish {
     sendMail {
         to params.email.onfinish
         from 'abacus.genome@mail.mcgill.ca'
-        attach "$multiqc_html"
         subject "Run processing complete - ${multiqc_json.seqtype} - ${multiqc_json.flowcell}"
 
         output.toString()
@@ -79,8 +78,8 @@ process GenapUpload {
     def key = params.sftpssharbutus
     """
     sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/Freezeman_validation/${runinf.year}/${multiqc.run}.report.html
-    chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${multiqc.run}.report.html
+    put $report_html /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
+    chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
     EOF
     """
 }
