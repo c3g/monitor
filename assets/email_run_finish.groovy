@@ -35,20 +35,39 @@ yieldUnescaped '<!DOCTYPE html>'
 html(lang:'en') {
     head {
         meta('http-equiv':'"Content-Type" content="text/html; charset=utf-8"')
-        title("MGI Run finished: ${run.run}")
+        title("${platform} Run finished: ${run.run}")
     }
     body {
         div(style:"font-family: Helvetica, Arial, sans-serif; padding: 30px; max-width: 900px; margin: 0 auto;") {
-            h3 "Run: ${run.run} (${run.flowcell})"
+            h3 "Run: ${event.data.run_name} (${run.flowcell})"
+            h3 "Folder: ${run.analysis_dir}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/MGI_validation/2023/${run.run}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/Freezeman_validation/${event.year}/${run.run}.report.html", "on GenAP" )
                 span "."
             }
             ul {
                 li "Spread: ${run.headerInfo.Spreads}"
                 li "Yield assigned to samples: ${nfGeneral.format(yield)} bp"
                 li "Instrument: ${run.headerInfo.Instrument}"
+            }
+            table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
+                tbody {
+                    tr(style:"background-color: #009879;color: #ffffff;text-align: left;") {
+                        th(style:'padding: 5px 10px', "Project Name")
+                        th(style:'padding: 5px 10px', "Samples")
+                    }
+                    samples.countBy{it.ProjectName ? it.ProjectName : it.project_name}.each { projectname, count -> 
+                        tr(style:'border: 2px solid #dddddd;') {
+                            td style:"padding: 5px 10px; font-weight: bold", projectname
+                            td style:"padding: 5px 10px;", count == 1 ? "${count} sample" : "${count} samples"
+                        }
+                    }
+                    tr(style:'background-color: #666666;color: #ffffff;text-align:left;') {
+                        td "Total"
+                        td  samples.size() == 1 ? "${samples.size()} sample" : "${samples.size()} samples"
+                    }
+                }
             }
             table(style:"box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);margin: 25px 0;font-size: 0.9em;border-collapse: collapse;") {
                 thead {
@@ -83,6 +102,11 @@ html(lang:'en') {
                 span workflow.commitId ? "Email generated at ${dateFormat(now)} using monitor at commit ${workflow.commitId}." : "Email generated at ${dateFormat(now)}."
             }
             p(style:"color: #999999; font-size: 12px", "C3G Run Processing.")
+            // p {
+            //     span(class:"apple-link", style:"color: #999999; font-size: 12px; text-align: center;") {
+            //         a(href:"https://c3g.ca/", style:"text-decoration: none; color: #999999; font-size: 12px; text-align: center;", "C3G Run Processing")
+            //     }
+            // }
         }
     }
 }

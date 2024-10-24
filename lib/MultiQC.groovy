@@ -1,22 +1,28 @@
 import java.nio.file.Path
 import groovy.json.JsonSlurper
+import groovy.json.JsonParserType
 import java.text.SimpleDateFormat
 
 class MultiQC {
     Map data
     String flowcell
     String run
+    String analysis_dir
 
     MultiQC(String path) {
         def file = new File(path)
-        this.data = new JsonSlurper().parseText(file.text)
+        def jsonSlurper = new JsonSlurper().setType( JsonParserType.LAX )
+        this.data = jsonSlurper.parseText(file.text)
+        this.analysis_dir = data?.config_analysis_dir
         def config_report_header_info = data?.config_report_header_info
         this.flowcell = config_report_header_info.find { it.containsKey("Flowcell") }.Flowcell
         this.run = config_report_header_info.find { it.containsKey("Run") }.Run
     }
 
     MultiQC(Path path) {
-        this.data = new JsonSlurper().parseText(path.getText())
+        def jsonSlurper = new JsonSlurper().setType( JsonParserType.LAX )
+        this.data = jsonSlurper.parseText(path.getText())
+        this.analysis_dir = data?.config_analysis_dir
         def config_report_header_info = data?.config_report_header_info
         this.flowcell = config_report_header_info.find { it.containsKey("Flowcell") }.Flowcell
         this.run = config_report_header_info.find { it.containsKey("Run") }.Run

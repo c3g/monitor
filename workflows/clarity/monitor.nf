@@ -7,25 +7,28 @@ import groovy.text.markup.MarkupTemplateEngine
 
 process EmailAlertFinish {
     executor 'local'
+    errorStrategy 'terminate'
 
     input:
     tuple val(multiqc_html), val(multiqc_json)
 
     when:
-    !params.nomail
+    params.sendmail
 
     exec:
     def db = new MetadataDB(params.db, log)
     def evt = db.latestEventfile(multiqc_json.flowcell)
+    def platform = (evt.platform == "illumina") ? "Illumina" : "MGI"
     def email_fields = [
         run: multiqc_json,
         workflow: workflow,
+        platform: platform,
         event: evt
     ]
 
     TemplateConfiguration config = new TemplateConfiguration()
     MarkupTemplateEngine engine = new MarkupTemplateEngine(config);
-    def templateFile = new File("$projectDir/assets/email_MGI_run_finish.groovy")
+    def templateFile = new File("$projectDir/assets/email_run_finish.groovy")
     Writable output = engine.createTemplate(templateFile).make(email_fields)
 
     sendMail {
@@ -38,11 +41,11 @@ process EmailAlertFinish {
     }
 }
 
-
 process RunMultiQC {
     tag { donefile.getBaseName() }
     module 'mugqic_dev/MultiQC_C3G/1.12_beta'
     executor 'local'
+    errorStrategy 'terminate'
     maxForks 1
 
     input:
@@ -69,10 +72,13 @@ process GenapUpload {
     input:
     tuple path(report_html), val(multiqc)
 
+    script:
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc.flowcell)
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/MGI_validation/2023/${multiqc.run}.report.html
-    chmod 664 /datahub297/MGI_validation/2023/${multiqc.run}.report.html
+    put $report_html /datahub297/MGI_validation/${evt.year}/${multiqc.run}.report.html
+    chmod 664 /datahub297/MGI_validation/${evt.year}/${multiqc.run}.report.html
     EOF
     """
 }
@@ -87,10 +93,13 @@ process SummaryReportUpload {
     input:
     path(report)
 
+    script:
+    def db = new MetadataDB(params.db, log)
+    def evt = db.latestEventfile(multiqc.flowcell)
     """
     sftp -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report /datahub297/MGI_validation/2023/${report.name}
-    chmod 664 /datahub297/MGI_validation/2023/${report.name}
+    put $report /datahub297/MGI_validation/${evt.year}/${report.name}
+    chmod 664 /datahub297/MGI_validation/${evt.year}/${report.name}
     EOF
     """
 }
