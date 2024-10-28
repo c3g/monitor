@@ -60,7 +60,7 @@ process EmailAlertStart {
 
 process BeginRun {
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
     module 'mugqic/python/3.10.4'
 
     input:
@@ -97,6 +97,8 @@ process BeginRun {
         outdir_root = params.outdir
         seqtype = "dnbseqt7"
     }
+    // if (seqtype != null) {
+
     def run_name = "\$(basename ${rundir})"
     def outdir = "${outdir_root}/${seqtype}/${year}/${run_name}-${seqtype}"
 
@@ -130,6 +132,7 @@ cp ${runinfofile.filename} ${outdir}/
 cp genpipes_submitter.sh ${outdir}/
 cp genpipes_submitter.out ${outdir}/
     """
+    // }
 }
 
 workflow WatchRunInfofiles {
