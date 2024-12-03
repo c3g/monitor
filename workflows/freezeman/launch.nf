@@ -425,7 +425,7 @@ workflow MatchRunInfofilesWithIlluminaRuns {
 
 workflow Launch {
     WatchRunInfofiles()
-    MatchRunInfofilesWithG400Runs(WatchRunInfofiles.out.mgig400)
-    MatchRunInfofilesWithT7Runs(WatchRunInfofiles.out.mgit7)
+//    MatchRunInfofilesWithG400Runs(WatchRunInfofiles.out.mgig400)
+//    MatchRunInfofilesWithT7Runs(WatchRunInfofiles.out.mgit7)
     MatchRunInfofilesWithIlluminaRuns(WatchRunInfofiles.out.illumina)
 }
