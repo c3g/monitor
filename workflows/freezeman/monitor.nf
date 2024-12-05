@@ -7,7 +7,7 @@ import groovy.text.markup.MarkupTemplateEngine
 
 process EmailAlertFinish {
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
 
     input:
     tuple val(multiqc_html), val(multiqc_json)
@@ -44,7 +44,7 @@ process EmailAlertFinish {
 process RunMultiQC {
     tag { donefile.getBaseName() }
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
     maxForks 1
     module 'mugqic_dev/MultiQC_C3G/1.23_8ade80c'
 
@@ -66,7 +66,7 @@ process RunMultiQC {
 process GenapUpload {
     tag { multiqc.flowcell }
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
     maxForks 1
 
     input:
@@ -87,7 +87,7 @@ process GenapUpload {
 process FreezemanIngest {
     tag { reportfile }
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
     maxForks 1
     module 'mugqic/python/3.10.2'
 
@@ -107,7 +107,7 @@ process FreezemanIngest {
 process SummaryReportUpload {
     tag { report.name - "_L01.summaryReport.html" }
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
     maxForks 1
 
     input:

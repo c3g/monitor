@@ -13,7 +13,7 @@ import static com.xlson.groovycsv.CsvParser.parseCsv
 
 process EmailAlertStart {
     executor 'local'
-    errorStrategy = {task.attempt <= 2 ? 'retry' : 'ignore'}
+    errorStrategy = 'ignore'
 
     input:
     val(runinfofile)
