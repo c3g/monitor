@@ -126,8 +126,8 @@ process SummaryReportUpload {
 }
 
 workflow WatchCheckpoints {
-    log.info "Watching for checkpoint files at ${params.outdir}/!(dnbseqt7).*/20*/*/job_output/checkpoint/*.stepDone"
-    donefiles = Channel.watchPath("${params.outdir}/!(dnbseqt7).*/20*/*/job_output/checkpoint/*.stepDone", 'create,modify')
+    log.info "Watching for checkpoint files at ${params.outdir}/novase*/20*/*/job_output/checkpoint/*.stepDone"
+    donefiles = Channel.watchPath("${params.outdir}/novase*/20*/*/job_output/checkpoint/*.stepDone", 'create,modify')
 
     // Run MultiQC on all donefiles
     donefiles
@@ -151,8 +151,8 @@ workflow WatchCheckpoints {
 }
 
 workflow WatchFinish {
-    log.info "Watching for .done files at ${params.outdir}/!(dnbseqt7).*/20*/*/job_output/final_notification/final_notification.*.done"
-    donefiles = Channel.watchPath("${params.outdir}/!(dnbseqt7).*/20*/*/job_output/final_notification/final_notification.*.done", 'create,modify')
+    log.info "Watching for .done files at ${params.outdir}/novase*/20*/*/job_output/final_notification/final_notification.*.done"
+    donefiles = Channel.watchPath("${params.outdir}/novase*/20*/*/job_output/final_notification/final_notification.*.done", 'create,modify')
 
     // Ingestion of the GenPipes report (JSON) into Freezeman (one report per lane)
     donefiles
