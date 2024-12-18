@@ -59,7 +59,8 @@ process RunMultiQC {
         --template c3g \\
         --runprocessing \\
         --interactive
-    cp -r multiqc_* $rundir/report
+    rsync -av multiqc_* $rundir/report
+    rsync -av multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
     """
 }
 
