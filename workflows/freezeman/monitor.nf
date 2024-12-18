@@ -61,6 +61,9 @@ process RunMultiQC {
         --interactive
     rsync -av multiqc_* $rundir/report
     rsync -av multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
+    curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
+        -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
+        -H "Content-Type: application/json" -d @$rundir/report/multiqc_data/multiqc_data.json
     """
 }
 
