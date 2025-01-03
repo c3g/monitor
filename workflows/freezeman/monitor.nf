@@ -46,7 +46,7 @@ process RunMultiQC {
     executor 'local'
     errorStrategy = 'ignore'
     maxForks 1
-    module 'mugqic_dev/MultiQC_C3G/1.23_8ade80c'
+    module 'mugqic_dev/MultiQC_C3G/1.23_64e8b8a'
 
     input:
     tuple path(rundir), path(donefile)
@@ -60,10 +60,23 @@ process RunMultiQC {
         --runprocessing \\
         --interactive
     rsync -av multiqc_* $rundir/report
-    rsync -av multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
+    """
+}
+
+process FinalSync {
+    tag { multiqc.flowcell }
+    executor 'local'
+    errorStrategy = 'ignore'
+    maxForks 1
+
+    input:
+    tuple path(rundir), val(multiqc)
+
+    """
+    rsync -av /nb/Research/freezeman-processing/*/*/$rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
     curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
         -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
-        -H "Content-Type: application/json" -d @$rundir/report/multiqc_data/multiqc_data.json
+        -H "Content-Type: application/json" -d @/nb/Research/freezeman-processing/*/*/$rundir/report/multiqc_data/multiqc_data.json
     """
 }
 
@@ -177,5 +190,5 @@ workflow WatchFinish {
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
-    | (GenapUpload & EmailAlertFinish)
+    | (FinalSync & GenapUpload & EmailAlertFinish)
 }
