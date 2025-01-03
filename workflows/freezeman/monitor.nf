@@ -73,10 +73,10 @@ process FinalSync {
     tuple path(rundir), val(multiqc)
 
     """
-    rsync -av /nb/Research/freezeman-processing/*/*/$rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
+    rsync -av $rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
     curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
         -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
-        -H "Content-Type: application/json" -d @/nb/Research/freezeman-processing/*/*/$rundir/report/multiqc_data/multiqc_data.json
+        -H "Content-Type: application/json" -d @$rundir/report/multiqc_data/multiqc_data.json
     """
 }
 
@@ -189,6 +189,8 @@ workflow WatchFinish {
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
+    | map { donefile, json -> [donefile.getParent().getParent().getParent(), new MultiQC(json)]}
+    | FinalSync
     | map { html, json -> [html, new MultiQC(json)] }
-    | (FinalSync & GenapUpload & EmailAlertFinish)
+    | (GenapUpload & EmailAlertFinish)
 }
