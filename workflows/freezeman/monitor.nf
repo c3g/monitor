@@ -189,8 +189,8 @@ workflow WatchFinish {
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
-    | map { donefile, json -> [donefile.getParent().getParent().getParent(), new MultiQC(json)]}
-    | FinalSync
     | map { html, json -> [html, new MultiQC(json)] }
     | (GenapUpload & EmailAlertFinish)
+    | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
+    | FinalSync
 }
