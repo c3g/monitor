@@ -63,24 +63,6 @@ process RunMultiQC {
     """
 }
 
-process FinalSync {
-    tag { multiqc.flowcell }
-    executor 'local'
-    errorStrategy = 'ignore'
-    maxForks 1
-
-    input:
-    tuple path(rundir), path(donefile)
-
-    """
-    sleep 240
-    rsync -av $rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
-    curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
-        -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
-        -H "Content-Type: application/json" -d @$rundir/report/multiqc_data/multiqc_data.json
-    """
-}
-
 process GenapUpload {
     tag { multiqc.flowcell }
     executor 'local'
@@ -189,7 +171,7 @@ workflow WatchFinish {
     // Upload to GenAP + Send end-of-processing email notification
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
-    | (RunMultiQC & FinalSync)
+    | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
     | (GenapUpload & EmailAlertFinish)
 }
