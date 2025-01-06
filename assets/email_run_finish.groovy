@@ -43,7 +43,7 @@ html(lang:'en') {
             h3 "Folder: ${run.analysis_dir}"
             p {
                 span "Run processing finished. Full report attached to this email, but also available "
-                a ( href:"https://datahub-297-p25.p.genap.ca/Freezeman_validation/${event.year}/${run.run}.report.html", "on GenAP" )
+                a ( href:"https://datahub-297-p25.p.genap.ca/Freezeman_validation/${event.year}/${event.data.run_name}.report.html", "on GenAP" )
                 span "."
             }
             ul {

@@ -70,13 +70,13 @@ process FinalSync {
     maxForks 1
 
     input:
-    tuple val(multiqc_html), val(multiqc), path(rundir)
+    tuple val(multiqc_html), val(multiqc) 
 
     """
-    rsync -av $rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
+    rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/*/${multiqc.analysis_dir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/*/${multiqc.analysis_dir}/report
     curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
         -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
-        -H "Content-Type: application/json" -d @$rundir/report/multiqc_data/multiqc_data.json
+        -H "Content-Type: application/json" -d @/nb/Research/freezeman-processing/${multiqc.seqtype}/*/${multiqc.analysis_dir}/report/multiqc_data/multiqc_data.json
     """
 }
 
@@ -189,6 +189,6 @@ workflow WatchFinish {
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
-    | map { html, json -> [html, new MultiQC(json), html.getParent().getParent()] }
-    | (GenapUpload & EmailAlertFinish & FinalSync) 
+    | map { html, json -> [html, new MultiQC(json)] }
+    | (GenapUpload & EmailAlertFinish & FinalSync)
 }
