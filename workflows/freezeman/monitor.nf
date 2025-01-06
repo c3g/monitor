@@ -64,7 +64,7 @@ process RunMultiQC {
 }
 
 process FinalSync {
-    tag { multiqc.flowcell }
+    tag { multiqc.run }
     executor 'local'
     errorStrategy = 'ignore'
     maxForks 1
