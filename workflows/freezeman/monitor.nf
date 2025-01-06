@@ -64,12 +64,13 @@ process RunMultiQC {
 }
 
 process FinalSync {
+    tag { multiqc.flowcell }
     executor 'local'
     errorStrategy = 'ignore'
     maxForks 1
 
     input:
-    tuple path(rundir), path(donefile)
+    tuple val(multiqc_html), val(multiqc), path(rundir)
 
     """
     rsync -av $rundir/report/multiqc_* /lb/robot/research/freezeman-processing/*/*/$rundir/report
@@ -187,7 +188,7 @@ workflow WatchFinish {
     // Upload to GenAP + Send end-of-processing email notification
     donefiles
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
-    | (RunMultiQC & FinalSync)
-    | map { html, json -> [html, new MultiQC(json)] }
-    | (GenapUpload & EmailAlertFinish)
+    | RunMultiQC
+    | map { html, json -> [html, new MultiQC(json), html.getParent().getParent()] }
+    | (GenapUpload & EmailAlertFinish & FinalSync) 
 }
