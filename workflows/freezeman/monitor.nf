@@ -78,7 +78,6 @@ process FinalSync {
     def runinf = db.latestRunInfofile(multiqc.flowcell)
 
     """
-    echo $rundir
     rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* \\
         /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
     curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
