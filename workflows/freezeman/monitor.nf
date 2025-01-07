@@ -73,11 +73,17 @@ process FinalSync {
     tuple val(multiqc_html), val(multiqc) 
 
     script:
-    def run_dir = multiqc.analysis_dir.toString()
+    def rundir = multiqc.analysis_dir
+    def db = new MetadataDB(params.db, log)
+    def runinf = db.latestRunInfofile(multiqc.flowcell)
 
     """
-    rundir=\$( echo $run_dir | sed 's/\\[//' | sed 's/\\]//' )
-    rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/*/\${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/*/\${rundir}/report
+    rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* \\
+        /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
+    curl -k -X POST https://dashrunr.c3g-app.sd4h.ca/update \\
+        -H "descrambler-key: \$(cat ~/assets/run-processing-update-headers)" \\
+        -H "Content-Type: application/json" \\
+        -d @/nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_data/multiqc_data.json
     """
 }
 
