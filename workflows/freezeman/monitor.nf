@@ -46,7 +46,7 @@ process RunMultiQC {
     executor 'local'
     errorStrategy = 'ignore'
     maxForks 1
-    module 'mugqic_dev/MultiQC_C3G/1.23_64e8b8a'
+    module 'mugqic_dev/MultiQC_C3G/1.23_dda3293'
 
     input:
     tuple path(rundir), path(donefile)
@@ -60,6 +60,24 @@ process RunMultiQC {
         --runprocessing \\
         --interactive
     rsync -av multiqc_* $rundir/report
+    """
+}
+
+process FinalSync {
+    tag { multiqc.run }
+    executor 'local'
+    errorStrategy = 'ignore'
+    maxForks 1
+
+    input:
+    tuple val(multiqc_html), val(multiqc) 
+
+    script:
+    def run_dir = multiqc.analysis_dir.toString()
+
+    """
+    rundir=\$( echo $run_dir | sed 's/\\[//' | sed 's/\\]//' )
+    rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/*/\${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/*/\${rundir}/report
     """
 }
 
@@ -173,5 +191,5 @@ workflow WatchFinish {
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
-    | (GenapUpload & EmailAlertFinish)
+    | (GenapUpload & EmailAlertFinish & FinalSync)
 }
