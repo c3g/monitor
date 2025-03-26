@@ -47,7 +47,7 @@ process RunMultiQC {
     errorStrategy = 'ignore'
     time '20m'
     maxForks 1
-    module 'mugqic_dev/MultiQC_C3G/1.23_a63ec70'
+    module 'mugqic_dev/MultiQC_C3G/1.23_25779fb'
 
     input:
     tuple path(rundir), path(donefile)
@@ -102,6 +102,9 @@ process GenapUpload {
     def runinf = db.latestRunInfofile(multiqc.flowcell)
     def key = params.sftpssharbutus
     """
+    mkdir -p /lb/robot/research/freezeman-processing/reports/${runinf.year} && \\
+    rsync -av $report_html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html && \\
+    ln -s /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html 
     sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
     put $report_html /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
     chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
