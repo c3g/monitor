@@ -104,6 +104,7 @@ process GenapUpload {
     def key = params.sftpssharbutus
     """
     mkdir -p /lb/robot/research/freezeman-processing/reports/${runinf.year} && \\
+    rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
     [ ! -L /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html ] && \\
     ln -s /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html 
     sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
