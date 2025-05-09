@@ -10,10 +10,11 @@ class IlluminaRTACompletefile {
         this.path = path.toAbsolutePath()
         this.lastmodified = path.lastModified()
         this.seqtype = type
-        def novx = "novaseqx"
         def raw_flowcell
-        if ( type == novx ) {
+        if ( type == "novaseqx" ) {
             raw_flowcell = path.toString().split('/')[-2].split('_')[3]
+        } else if ( type == "miseq" ) {
+            raw_flowcell = path.toString().split('/')[-2].split('-')[-1]
         } else {
             raw_flowcell = path.toString().split('/')[-2].split('_')[-2]
         }

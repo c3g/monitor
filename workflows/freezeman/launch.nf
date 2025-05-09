@@ -86,6 +86,11 @@ process BeginRun {
         outdir_root = params.outdir
         def db = new MetadataDB(params.db, log)
         seqtype = db.seqType(runinfofile)
+        if (seqtype == "miseq") {
+            mismatches = 0
+        } else {
+            mismatches = 1
+        }
     } else if (runinfofile.platform == "mgig400") {
         rundir = "\$(ls -dt /nb/Research/MGISeq/seq[12]/R213040019001[68]/*${runinfofile.flowcell}* | head -n 1)"
         outdir_root = params.outdir
@@ -120,6 +125,7 @@ EOF
     -j pbs \\
     -l debug \\
     -d $rundir \\
+    -m $mismatches \\
     $flag \\
     $splitbarcodeDemux \\
     --type ${runinfofile.platform} \\
