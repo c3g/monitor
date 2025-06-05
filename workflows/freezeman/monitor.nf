@@ -88,7 +88,7 @@ process FinalSync {
     """
 }
 
-process GenapUpload {
+process UpdateReport {
     tag { multiqc.flowcell }
     executor 'local'
     errorStrategy = 'ignore'
@@ -104,12 +104,10 @@ process GenapUpload {
     def key = params.sftpssharbutus
     """
     mkdir -p /lb/robot/research/freezeman-processing/reports/${runinf.year} && \\
+    mkdir -p /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir} && \\
     rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
     [ ! -L /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html ] && \\
     ln -s /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html 
-    sftp -i $key -P 22004 sftp_p25@sftp-arbutus.genap.ca <<EOF
-    put $report_html /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
-    chmod 664 /datahub297/Freezeman_validation/${runinf.year}/${runinf.data.run_name}.report.html
     EOF
     """
 }
@@ -164,7 +162,7 @@ workflow WatchCheckpoints {
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
-    | GenapUpload
+    | UpdateReport
 
     // If the donefile is the "basecall" donefile, then we can upload the MGI summaryReport.html
     donefiles
@@ -203,5 +201,5 @@ workflow WatchFinish {
     | map { donefile -> [donefile.getParent().getParent().getParent(), donefile] }
     | RunMultiQC
     | map { html, json -> [html, new MultiQC(json)] }
-    | (GenapUpload & EmailAlertFinish & FinalSync)
+    | (UpdateReport & EmailAlertFinish & FinalSync)
 }
