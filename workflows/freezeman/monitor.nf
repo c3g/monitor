@@ -47,7 +47,7 @@ process RunMultiQC {
     errorStrategy = 'ignore'
     time '20m'
     maxForks 1
-    module 'mugqic_dev/MultiQC_C3G/1.23_25779fb'
+    module 'mugqic_dev/MultiQC_C3G/1.23_4b273be'
 
     input:
     tuple path(rundir), path(donefile)
