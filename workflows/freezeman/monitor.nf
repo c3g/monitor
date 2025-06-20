@@ -108,7 +108,6 @@ process UpdateReport {
     rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
     [ ! -L /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html ] && \\
     ln -s /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html 
-    EOF
     """
 }
 
