@@ -405,9 +405,10 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //}
     //.set { RunInfofilesForRunningFromISeq2 }
 
-    RunInfofilesForRunningFromMiseq
-    //| mix(RunInfofilesForRunningFromHiseqX)
-    | mix(RunInfofilesForRunningFromNovaseqX)
+//    RunInfofilesForRunningFromMiseq          //TODO This is a line to uncomment in case of problem
+//    //| mix(RunInfofilesForRunningFromHiseqX)//TODO This is a line to uncomment in case of problem
+//    | mix(RunInfofilesForRunningFromNovaseqX)//TODO This is a line to uncomment in case of problem
+    RunInfofilesForRunningFromNovaseqX//       //TODO This is a new line to remove in case of problem
     | mix(RunInfofilesForRunningFromNovaseq)
     //| mix(RunInfofilesForRunningFromISeq1)
     //| mix(RunInfofilesForRunningFromISeq2)
