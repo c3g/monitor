@@ -278,10 +278,10 @@ workflow MatchRunInfofilesWithIlluminaRuns {
 
     // Preexisting RTAComplete files go directly to the DB.
     // Miseq
-    Channel.fromPath(params.illumina.miseq)
-    .map { new IlluminaRTACompletefile(it, "miseq") }
-    .map { db.insert(it) }
-    // hiseqX
+//    Channel.fromPath(params.illumina.miseq)           //TODO This is a line to uncomment in case of problem
+//    .map { new IlluminaRTACompletefile(it, "miseq") } //TODO This is a line to uncomment in case of problem
+//    .map { db.insert(it) }                            //TODO This is a line to uncomment in case of problem
+    // hiseqX                                           
     //Channel.fromPath(params.illumina.hiseqx)
     //.map { new IlluminaRTACompletefile(it, "hiseqx") }
     //.map { db.insert(it) }
@@ -303,22 +303,22 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     //.map { db.insert(it) }
 
     // New RTAComplete files should be stored and then checked to see if we should begin processing
-    log.info("Watching for new Illumina RTAComplete files at '${params.illumina.miseq}'")
-    Channel.watchPath(params.illumina.miseq)
-    .map { new IlluminaRTACompletefile(it, "miseq") }
-    .map { rf ->
-        db.insert(rf)
-        def rinfo = db.latestRunInfofile(rf.flowcell)
-        if (rinfo == null) {
-            log.debug("New RTAComplete file (${rf.flowcell}) | No matching runinfo file")
-        } else if (rinfo.alreadyLaunched()) {
-            log.debug("New RTAComplete file (${rf.flowcell}) | Latest runinfo file already launched: ${rinfo}")
-        } else {
-            log.debug("New RTAComplete file (${rf.flowcell}) | Found a live runinfo file: ${rinfo}")
-            return rinfo
-        }
-    }
-    .set { RunInfofilesForRunningFromMiseq }
+//    log.info("Watching for new Illumina RTAComplete files at '${params.illumina.miseq}'")                       //TODO This is a line to uncomment in case of problem
+//    Channel.watchPath(params.illumina.miseq)                                                                    //TODO This is a line to uncomment in case of problem
+//    .map { new IlluminaRTACompletefile(it, "miseq") }                                                           //TODO This is a line to uncomment in case of problem
+//    .map { rf ->                                                                                                //TODO This is a line to uncomment in case of problem
+//        db.insert(rf)                                                                                           //TODO This is a line to uncomment in case of problem
+//        def rinfo = db.latestRunInfofile(rf.flowcell)                                                           //TODO This is a line to uncomment in case of problem
+//        if (rinfo == null) {                                                                                    //TODO This is a line to uncomment in case of problem
+//            log.debug("New RTAComplete file (${rf.flowcell}) | No matching runinfo file")                       //TODO This is a line to uncomment in case of problem
+//        } else if (rinfo.alreadyLaunched()) {                                                                   //TODO This is a line to uncomment in case of problem
+//            log.debug("New RTAComplete file (${rf.flowcell}) | Latest runinfo file already launched: ${rinfo}") //TODO This is a line to uncomment in case of problem
+//        } else {                                                                                                //TODO This is a line to uncomment in case of problem
+//            log.debug("New RTAComplete file (${rf.flowcell}) | Found a live runinfo file: ${rinfo}")            //TODO This is a line to uncomment in case of problem 
+//            return rinfo                                                                                        //TODO This is a line to uncomment in case of problem
+//        }                                                                                                       //TODO This is a line to uncomment in case of problem
+//    }                                                                                                           //TODO This is a line to uncomment in case of problem
+//    .set { RunInfofilesForRunningFromMiseq }                                                                    //TODO This is a line to uncomment in case of problem
 
     //log.info("Watching for new Illumina RTAComplete files at '${params.illumina.hiseqx}'")
     //Channel.watchPath(params.illumina.hiseqx)
