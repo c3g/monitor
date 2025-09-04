@@ -108,35 +108,8 @@ process BeginRun {
     def outdir = "${outdir_root}/${seqtype}/${year}/${run_name}-${seqtype}"
 
     """
-export MUGQIC_INSTALL_HOME_PRIVATE=/lb/project/mugqic/analyste_private
-module use \$MUGQIC_INSTALL_HOME_PRIVATE/modulefiles
-export MUGQIC_PIPELINES_HOME=${genpipes}
-
 mkdir -p ${outdir}
-
-cat <<EOF > ${runinfofile.filename}
-${runinfofile.text}
-EOF
-
-\$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.py \\
-    -c \$MUGQIC_PIPELINES_HOME/pipelines/run_processing/run_processing.base.ini ${custom_ini} \\
-    --genpipes_file genpipes_submitter.sh \\
-    -o ${outdir} \\
-    -j pbs \\
-    -l debug \\
-    -d $rundir \\
-    -m $mismatches \\
-    $flag \\
-    $splitbarcodeDemux \\
-    --type ${runinfofile.platform} \\
-    -r ${runinfofile.filename} \\
-    --force_mem_per_cpu 5G 2> genpipes_submitter.out
-
-bash genpipes_submitter.sh 
-
 cp ${runinfofile.filename} ${outdir}/
-cp genpipes_submitter.sh ${outdir}/
-cp genpipes_submitter.out ${outdir}/
     """
     // }
 }
@@ -425,8 +398,8 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromRTACompletefiles)
     | set { intermediateValue }
-    BeginRun(intermediateValue, params.genpipes)
-    | EmailAlertStart
+//    BeginRun(intermediateValue, params.genpipes)
+//    | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
 }
 
