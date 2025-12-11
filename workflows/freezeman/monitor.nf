@@ -47,7 +47,7 @@ process RunMultiQC {
     errorStrategy = 'ignore'
     time '20m'
     maxForks 1
-    module 'mugqic_dev/MultiQC_C3G/1.23_4b273be'
+    module 'mugqic_dev/MultiQC_C3G/1.23_4b0a835'
 
     input:
     tuple path(rundir), path(donefile)
@@ -107,7 +107,7 @@ process UpdateReport {
     mkdir -p /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir} && \\
     rsync -av /nb/Research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_* /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report
     [ ! -L /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html ] && \\
-    ln -s /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html; echo $?
+    ln -s /lb/robot/research/freezeman-processing/${multiqc.seqtype}/${runinf.year}/${rundir}/report/multiqc_report.html /lb/robot/research/freezeman-processing/reports/${runinf.year}/${runinf.data.run_name}.report.html; echo \$?
     """
 }
 

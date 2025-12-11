@@ -398,8 +398,8 @@ workflow MatchRunInfofilesWithIlluminaRuns {
     RunInfofilesForRunning
     | mix(RunInfofilesForRunningFromRTACompletefiles)
     | set { intermediateValue }
-//    BeginRun(intermediateValue, params.genpipes)
-//    | EmailAlertStart
+    BeginRun(intermediateValue, params.genpipes)
+    | EmailAlertStart
     | map { RunInfofile rinfo -> db.markAsLaunched(rinfo) }
 }
 
